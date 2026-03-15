@@ -1,0 +1,46 @@
+{
+  "name": "documentation-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "guard:no-test-changes": "tsx scripts/guard-no-test-changes.ts",
+    "red-verify": "biome check . && tsc --noEmit",
+    "verify": "biome check . && tsc --noEmit && vitest run",
+    "green-verify": "biome check . && tsc --noEmit && vitest run && tsx scripts/guard-no-test-changes.ts",
+    "verify-all": "biome check . && tsc --noEmit && vitest run && vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.2.76",
+    "@anthropic-ai/sdk": "0.78.0",
+    "citty": "0.2.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.7",
+    "@types/node": "24.12.0",
+    "@vitest/coverage-v8": "4.1.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.0"
+  }
+}
