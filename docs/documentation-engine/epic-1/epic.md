@@ -684,6 +684,14 @@ interface EnvironmentCheckRequest {
   repoPath?: string;
 }
 
+interface ConfigurationRequest {
+  repoPath?: string;
+  outputPath?: string;
+  includePatterns?: string[];
+  excludePatterns?: string[];
+  focusDirs?: string[];
+}
+
 interface DocumentationStatusRequest {
   repoPath: string;
   outputPath?: string;
