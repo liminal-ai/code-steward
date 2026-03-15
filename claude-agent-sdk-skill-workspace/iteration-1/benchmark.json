@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "skill_name": "claude-agent-sdk",
+    "skill_path": "/Users/leemoore/code/code-steward/.claude/skills/claude-agent-sdk-skill",
+    "executor_model": "claude-opus-4-6",
+    "analyzer_model": "claude-opus-4-6",
+    "timestamp": "2026-03-14T17:02:37Z",
+    "evals_run": ["pr-reviewer-agent", "python-multi-agent", "security-hooks"],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_name": "pr-reviewer-agent",
+      "with_skill": {"pass_rate": 0.875, "passed": 7, "total": 8, "tokens": 35768, "time_seconds": 151.8},
+      "without_skill": {"pass_rate": 0.875, "passed": 7, "total": 8, "tokens": 38949, "time_seconds": 177.4}
+    },
+    {
+      "eval_name": "python-multi-agent",
+      "with_skill": {"pass_rate": 1.0, "passed": 8, "total": 8, "tokens": 36584, "time_seconds": 183.7},
+      "without_skill": {"pass_rate": 0.125, "passed": 1, "total": 8, "tokens": 14803, "time_seconds": 104.0}
+    },
+    {
+      "eval_name": "security-hooks",
+      "with_skill": {"pass_rate": 1.0, "passed": 8, "total": 8, "tokens": 37849, "time_seconds": 152.7},
+      "without_skill": {"pass_rate": 0.375, "passed": 3, "total": 8, "tokens": 15502, "time_seconds": 114.6}
+    }
+  ],
+  "run_summary": {
+    "with_skill": {"mean_pass_rate": "95.8% ± 7.2%", "mean_tokens": "36734 ± 1045", "mean_time": "162.7s ± 17.9s"},
+    "without_skill": {"mean_pass_rate": "45.8% ± 38.5%", "mean_tokens": "23085 ± 13658", "mean_time": "132.0s ± 39.7s"},
+    "delta": {
+      "pass_rate": "+50.0pp",
+      "time_seconds": "+30.7s",
+      "tokens": "+13649"
+    }
+  },
+  "notes": [
+    "Largest lift on Python (12% → 100%) and hooks (38% → 100%) where baseline hallucinated wrong APIs.",
+    "Eval 1 (TS PR reviewer) shows no delta — model training data includes enough TS SDK knowledge.",
+    "With-skill uses ~60% more tokens (reading reference files) but dramatically better accuracy.",
+    "Baseline Python used old package name (claude_code_sdk) and invented Agent/AgentConfig/Tool classes.",
+    "Baseline hooks invented beforeToolCall/afterToolCall/AgentHooks — none exist in the SDK.",
+    "The mcp__ naming assertion failed for both variants in eval-1 — likely using wildcard in allowedTools without literal mcp__ strings in code."
+  ]
+}

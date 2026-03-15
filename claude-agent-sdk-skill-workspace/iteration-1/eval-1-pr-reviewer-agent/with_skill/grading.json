@@ -1,0 +1,49 @@
+{
+  "eval_name": "eval-1-pr-reviewer-agent",
+  "variant": "with_skill",
+  "pass_rate": 0.875,
+  "passed": 7,
+  "total": 8,
+  "expectations": [
+    {
+      "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+      "passed": true,
+      "evidence": "Found correct import"
+    },
+    {
+      "text": "Uses the query() function or TS V2 session API",
+      "passed": true,
+      "evidence": "Found query() usage"
+    },
+    {
+      "text": "Defines custom MCP tools using createSdkMcpServer() and tool()",
+      "passed": true,
+      "evidence": "createSdkMcpServer: True, tool(): True"
+    },
+    {
+      "text": "Uses Zod for tool input schemas",
+      "passed": true,
+      "evidence": "Found Zod import and usage"
+    },
+    {
+      "text": "Uses correct MCP tool naming convention mcp__<server>__<tool>",
+      "passed": false,
+      "evidence": "No mcp__ pattern"
+    },
+    {
+      "text": "Configures allowedTools with MCP tool references",
+      "passed": true,
+      "evidence": "Found allowedTools with MCP refs"
+    },
+    {
+      "text": "Handles result messages",
+      "passed": true,
+      "evidence": "Found result handling"
+    },
+    {
+      "text": "Implementation includes PR-specific logic",
+      "passed": true,
+      "evidence": "Found PR-related logic"
+    }
+  ]
+}

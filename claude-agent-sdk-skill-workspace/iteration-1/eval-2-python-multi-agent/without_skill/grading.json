@@ -1,0 +1,49 @@
+{
+  "eval_name": "eval-2-python-multi-agent",
+  "variant": "without_skill",
+  "pass_rate": 0.125,
+  "passed": 1,
+  "total": 8,
+  "expectations": [
+    {
+      "text": "Uses correct import from claude_agent_sdk (not claude_code_sdk)",
+      "passed": false,
+      "evidence": "claude_code_sdk (wrong)"
+    },
+    {
+      "text": "Uses ClaudeAgentOptions (not ClaudeCodeOptions)",
+      "passed": false,
+      "evidence": "Neither found"
+    },
+    {
+      "text": "Uses AgentDefinition for subagent definitions",
+      "passed": false,
+      "evidence": "No AgentDefinition"
+    },
+    {
+      "text": "Uses snake_case for option names",
+      "passed": false,
+      "evidence": "No snake_case options"
+    },
+    {
+      "text": "Includes 'Agent' in allowed_tools for the coordinator",
+      "passed": false,
+      "evidence": "No Agent tool reference"
+    },
+    {
+      "text": "Defines at least 2 subagents (researcher and writer)",
+      "passed": false,
+      "evidence": "Found researcher and writer definitions"
+    },
+    {
+      "text": "Uses async for pattern with query() or ClaudeSDKClient",
+      "passed": false,
+      "evidence": "Found async for with query/client"
+    },
+    {
+      "text": "Includes asyncio.run() or proper async entry point",
+      "passed": true,
+      "evidence": "Found asyncio.run"
+    }
+  ]
+}

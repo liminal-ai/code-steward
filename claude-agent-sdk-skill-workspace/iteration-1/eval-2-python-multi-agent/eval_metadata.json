@@ -1,0 +1,47 @@
+{
+  "eval_id": 2,
+  "eval_name": "python-multi-agent",
+  "prompt": "Help me set up a Python multi-agent system with the agent SDK where a coordinator delegates to researcher and writer subagents. I need the full working code with proper typing.",
+  "assertions": [
+    {
+      "id": "correct-import",
+      "text": "Uses correct import from claude_agent_sdk (not claude_code_sdk)",
+      "type": "programmatic"
+    },
+    {
+      "id": "correct-options-class",
+      "text": "Uses ClaudeAgentOptions (not ClaudeCodeOptions)",
+      "type": "programmatic"
+    },
+    {
+      "id": "agent-definition",
+      "text": "Uses AgentDefinition for subagent definitions",
+      "type": "programmatic"
+    },
+    {
+      "id": "snake-case-options",
+      "text": "Uses snake_case for option names (allowed_tools, max_turns, etc.)",
+      "type": "programmatic"
+    },
+    {
+      "id": "agent-tool-included",
+      "text": "Includes 'Agent' in allowed_tools for the coordinator",
+      "type": "programmatic"
+    },
+    {
+      "id": "multiple-subagents",
+      "text": "Defines at least 2 subagents (researcher and writer)",
+      "type": "programmatic"
+    },
+    {
+      "id": "async-pattern",
+      "text": "Uses async for pattern with query() or ClaudeSDKClient",
+      "type": "programmatic"
+    },
+    {
+      "id": "asyncio-run",
+      "text": "Includes asyncio.run() or proper async entry point",
+      "type": "programmatic"
+    }
+  ]
+}

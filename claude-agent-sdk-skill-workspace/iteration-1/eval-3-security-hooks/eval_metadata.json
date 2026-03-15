@@ -1,0 +1,47 @@
+{
+  "eval_id": 3,
+  "eval_name": "security-hooks",
+  "prompt": "I need to add security hooks to my existing agent SDK project that block writes to sensitive files and audit all tool usage. TypeScript project. Show me the full hooks configuration with proper typing.",
+  "assertions": [
+    {
+      "id": "correct-import",
+      "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+      "type": "programmatic"
+    },
+    {
+      "id": "pre-tool-use-hook",
+      "text": "Implements PreToolUse hook(s)",
+      "type": "programmatic"
+    },
+    {
+      "id": "hook-matcher",
+      "text": "Uses matcher pattern to target specific tools (e.g., 'Write|Edit')",
+      "type": "programmatic"
+    },
+    {
+      "id": "deny-decision",
+      "text": "Returns proper deny structure with hookSpecificOutput/permissionDecision/deny",
+      "type": "programmatic"
+    },
+    {
+      "id": "sensitive-file-check",
+      "text": "Checks file paths for sensitive patterns (.env, credentials, secrets, etc.)",
+      "type": "programmatic"
+    },
+    {
+      "id": "audit-logging",
+      "text": "Implements audit/logging hook that records tool usage",
+      "type": "programmatic"
+    },
+    {
+      "id": "async-non-blocking",
+      "text": "Uses async_: true for non-blocking audit hooks",
+      "type": "programmatic"
+    },
+    {
+      "id": "hooks-in-options",
+      "text": "Shows how to integrate hooks into the agent options object",
+      "type": "programmatic"
+    }
+  ]
+}

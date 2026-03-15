@@ -1,0 +1,49 @@
+{
+  "eval_name": "eval-3-security-hooks",
+  "variant": "without_skill",
+  "pass_rate": 0.375,
+  "passed": 3,
+  "total": 8,
+  "expectations": [
+    {
+      "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+      "passed": false,
+      "evidence": "Missing or wrong import"
+    },
+    {
+      "text": "Implements PreToolUse hook(s)",
+      "passed": false,
+      "evidence": "No PreToolUse"
+    },
+    {
+      "text": "Uses matcher pattern to target specific tools",
+      "passed": false,
+      "evidence": "No matcher"
+    },
+    {
+      "text": "Returns proper deny structure with hookSpecificOutput/permissionDecision/deny",
+      "passed": false,
+      "evidence": "Wrong deny structure"
+    },
+    {
+      "text": "Checks file paths for sensitive patterns (.env, credentials, secrets, etc.)",
+      "passed": true,
+      "evidence": "Found sensitive file checks"
+    },
+    {
+      "text": "Implements audit/logging hook that records tool usage",
+      "passed": true,
+      "evidence": "Found audit logging"
+    },
+    {
+      "text": "Uses async_: true for non-blocking audit hooks",
+      "passed": false,
+      "evidence": "No async_ usage"
+    },
+    {
+      "text": "Shows how to integrate hooks into the agent options object",
+      "passed": true,
+      "evidence": "No hooks integration"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "skill_name": "claude-agent-sdk",
+  "evals": [
+    {
+      "id": 1,
+      "name": "pr-reviewer-agent",
+      "prompt": "I want to build a TypeScript agent that reviews PRs using the Claude Agent SDK with custom MCP tools for GitHub. Show me the full implementation including the MCP tool definitions, agent configuration, and how to run it.",
+      "expected_output": "Working TypeScript code that creates custom MCP tools for GitHub PR review, configures an agent with appropriate permissions and tools, and processes query results.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "python-multi-agent",
+      "prompt": "Help me set up a Python multi-agent system with the agent SDK where a coordinator delegates to researcher and writer subagents. I need the full working code with proper typing.",
+      "expected_output": "Working Python code using claude_agent_sdk with AgentDefinition for subagents, ClaudeSDKClient or query() for orchestration, proper async patterns, and Pydantic types where applicable.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "security-hooks",
+      "prompt": "I need to add security hooks to my existing agent SDK project that block writes to sensitive files and audit all tool usage. TypeScript project. Show me the full hooks configuration with proper typing.",
+      "expected_output": "TypeScript hook implementations with PreToolUse/PostToolUse matchers, deny patterns for sensitive files, audit logging, and integration into the agent options.",
+      "files": []
+    }
+  ]
+}

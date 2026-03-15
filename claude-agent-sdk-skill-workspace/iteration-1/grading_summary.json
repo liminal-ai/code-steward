@@ -1,0 +1,296 @@
+{
+  "eval-1-pr-reviewer-agent/with_skill": {
+    "eval_name": "eval-1-pr-reviewer-agent",
+    "variant": "with_skill",
+    "pass_rate": 0.875,
+    "passed": 7,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+        "passed": true,
+        "evidence": "Found correct import"
+      },
+      {
+        "text": "Uses the query() function or TS V2 session API",
+        "passed": true,
+        "evidence": "Found query() usage"
+      },
+      {
+        "text": "Defines custom MCP tools using createSdkMcpServer() and tool()",
+        "passed": true,
+        "evidence": "createSdkMcpServer: True, tool(): True"
+      },
+      {
+        "text": "Uses Zod for tool input schemas",
+        "passed": true,
+        "evidence": "Found Zod import and usage"
+      },
+      {
+        "text": "Uses correct MCP tool naming convention mcp__<server>__<tool>",
+        "passed": false,
+        "evidence": "No mcp__ pattern"
+      },
+      {
+        "text": "Configures allowedTools with MCP tool references",
+        "passed": true,
+        "evidence": "Found allowedTools with MCP refs"
+      },
+      {
+        "text": "Handles result messages",
+        "passed": true,
+        "evidence": "Found result handling"
+      },
+      {
+        "text": "Implementation includes PR-specific logic",
+        "passed": true,
+        "evidence": "Found PR-related logic"
+      }
+    ]
+  },
+  "eval-1-pr-reviewer-agent/without_skill": {
+    "eval_name": "eval-1-pr-reviewer-agent",
+    "variant": "without_skill",
+    "pass_rate": 0.875,
+    "passed": 7,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+        "passed": true,
+        "evidence": "Found correct import"
+      },
+      {
+        "text": "Uses the query() function or TS V2 session API",
+        "passed": true,
+        "evidence": "Found query() usage"
+      },
+      {
+        "text": "Defines custom MCP tools using createSdkMcpServer() and tool()",
+        "passed": true,
+        "evidence": "createSdkMcpServer: True, tool(): True"
+      },
+      {
+        "text": "Uses Zod for tool input schemas",
+        "passed": true,
+        "evidence": "Found Zod import and usage"
+      },
+      {
+        "text": "Uses correct MCP tool naming convention mcp__<server>__<tool>",
+        "passed": false,
+        "evidence": "No mcp__ pattern"
+      },
+      {
+        "text": "Configures allowedTools with MCP tool references",
+        "passed": true,
+        "evidence": "Found allowedTools with MCP refs"
+      },
+      {
+        "text": "Handles result messages",
+        "passed": true,
+        "evidence": "Found result handling"
+      },
+      {
+        "text": "Implementation includes PR-specific logic",
+        "passed": true,
+        "evidence": "Found PR-related logic"
+      }
+    ]
+  },
+  "eval-2-python-multi-agent/with_skill": {
+    "eval_name": "eval-2-python-multi-agent",
+    "variant": "with_skill",
+    "pass_rate": 1.0,
+    "passed": 8,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from claude_agent_sdk (not claude_code_sdk)",
+        "passed": true,
+        "evidence": "claude_agent_sdk"
+      },
+      {
+        "text": "Uses ClaudeAgentOptions (not ClaudeCodeOptions)",
+        "passed": true,
+        "evidence": "ClaudeAgentOptions"
+      },
+      {
+        "text": "Uses AgentDefinition for subagent definitions",
+        "passed": true,
+        "evidence": "Found AgentDefinition"
+      },
+      {
+        "text": "Uses snake_case for option names",
+        "passed": true,
+        "evidence": "Found snake_case options"
+      },
+      {
+        "text": "Includes 'Agent' in allowed_tools for the coordinator",
+        "passed": true,
+        "evidence": "Found Agent in allowed_tools context"
+      },
+      {
+        "text": "Defines at least 2 subagents (researcher and writer)",
+        "passed": true,
+        "evidence": "Found researcher and writer definitions"
+      },
+      {
+        "text": "Uses async for pattern with query() or ClaudeSDKClient",
+        "passed": true,
+        "evidence": "Found async for with query/client"
+      },
+      {
+        "text": "Includes asyncio.run() or proper async entry point",
+        "passed": true,
+        "evidence": "Found asyncio.run"
+      }
+    ]
+  },
+  "eval-2-python-multi-agent/without_skill": {
+    "eval_name": "eval-2-python-multi-agent",
+    "variant": "without_skill",
+    "pass_rate": 0.125,
+    "passed": 1,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from claude_agent_sdk (not claude_code_sdk)",
+        "passed": false,
+        "evidence": "claude_code_sdk (wrong)"
+      },
+      {
+        "text": "Uses ClaudeAgentOptions (not ClaudeCodeOptions)",
+        "passed": false,
+        "evidence": "Neither found"
+      },
+      {
+        "text": "Uses AgentDefinition for subagent definitions",
+        "passed": false,
+        "evidence": "No AgentDefinition"
+      },
+      {
+        "text": "Uses snake_case for option names",
+        "passed": false,
+        "evidence": "No snake_case options"
+      },
+      {
+        "text": "Includes 'Agent' in allowed_tools for the coordinator",
+        "passed": false,
+        "evidence": "No Agent tool reference"
+      },
+      {
+        "text": "Defines at least 2 subagents (researcher and writer)",
+        "passed": false,
+        "evidence": "Found researcher and writer definitions"
+      },
+      {
+        "text": "Uses async for pattern with query() or ClaudeSDKClient",
+        "passed": false,
+        "evidence": "Found async for with query/client"
+      },
+      {
+        "text": "Includes asyncio.run() or proper async entry point",
+        "passed": true,
+        "evidence": "Found asyncio.run"
+      }
+    ]
+  },
+  "eval-3-security-hooks/with_skill": {
+    "eval_name": "eval-3-security-hooks",
+    "variant": "with_skill",
+    "pass_rate": 1.0,
+    "passed": 8,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+        "passed": true,
+        "evidence": "Found correct import"
+      },
+      {
+        "text": "Implements PreToolUse hook(s)",
+        "passed": true,
+        "evidence": "Found PreToolUse"
+      },
+      {
+        "text": "Uses matcher pattern to target specific tools",
+        "passed": true,
+        "evidence": "Found matcher with tool patterns"
+      },
+      {
+        "text": "Returns proper deny structure with hookSpecificOutput/permissionDecision/deny",
+        "passed": true,
+        "evidence": "Found correct deny structure"
+      },
+      {
+        "text": "Checks file paths for sensitive patterns (.env, credentials, secrets, etc.)",
+        "passed": true,
+        "evidence": "Found sensitive file checks"
+      },
+      {
+        "text": "Implements audit/logging hook that records tool usage",
+        "passed": true,
+        "evidence": "Found audit logging"
+      },
+      {
+        "text": "Uses async_: true for non-blocking audit hooks",
+        "passed": true,
+        "evidence": "Found async_: true"
+      },
+      {
+        "text": "Shows how to integrate hooks into the agent options object",
+        "passed": true,
+        "evidence": "Found hooks in options"
+      }
+    ]
+  },
+  "eval-3-security-hooks/without_skill": {
+    "eval_name": "eval-3-security-hooks",
+    "variant": "without_skill",
+    "pass_rate": 0.375,
+    "passed": 3,
+    "total": 8,
+    "expectations": [
+      {
+        "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+        "passed": false,
+        "evidence": "Missing or wrong import"
+      },
+      {
+        "text": "Implements PreToolUse hook(s)",
+        "passed": false,
+        "evidence": "No PreToolUse"
+      },
+      {
+        "text": "Uses matcher pattern to target specific tools",
+        "passed": false,
+        "evidence": "No matcher"
+      },
+      {
+        "text": "Returns proper deny structure with hookSpecificOutput/permissionDecision/deny",
+        "passed": false,
+        "evidence": "Wrong deny structure"
+      },
+      {
+        "text": "Checks file paths for sensitive patterns (.env, credentials, secrets, etc.)",
+        "passed": true,
+        "evidence": "Found sensitive file checks"
+      },
+      {
+        "text": "Implements audit/logging hook that records tool usage",
+        "passed": true,
+        "evidence": "Found audit logging"
+      },
+      {
+        "text": "Uses async_: true for non-blocking audit hooks",
+        "passed": false,
+        "evidence": "No async_ usage"
+      },
+      {
+        "text": "Shows how to integrate hooks into the agent options object",
+        "passed": true,
+        "evidence": "No hooks integration"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "eval_id": 1,
+  "eval_name": "pr-reviewer-agent",
+  "prompt": "I want to build a TypeScript agent that reviews PRs using the Claude Agent SDK with custom MCP tools for GitHub. Show me the full implementation including the MCP tool definitions, agent configuration, and how to run it.",
+  "assertions": [
+    {
+      "id": "correct-import",
+      "text": "Uses correct import from @anthropic-ai/claude-agent-sdk",
+      "type": "programmatic"
+    },
+    {
+      "id": "uses-query",
+      "text": "Uses the query() function or TS V2 session API",
+      "type": "programmatic"
+    },
+    {
+      "id": "custom-mcp-tools",
+      "text": "Defines custom MCP tools using createSdkMcpServer() and tool()",
+      "type": "programmatic"
+    },
+    {
+      "id": "zod-schemas",
+      "text": "Uses Zod for tool input schemas",
+      "type": "programmatic"
+    },
+    {
+      "id": "mcp-naming",
+      "text": "Uses correct MCP tool naming convention mcp__<server>__<tool>",
+      "type": "programmatic"
+    },
+    {
+      "id": "allowed-tools-config",
+      "text": "Configures allowedTools with MCP tool references",
+      "type": "programmatic"
+    },
+    {
+      "id": "result-handling",
+      "text": "Handles result messages (checks message.type === 'result' or similar)",
+      "type": "programmatic"
+    },
+    {
+      "id": "pr-review-logic",
+      "text": "Implementation includes PR-specific logic (fetching PR data, posting comments, etc.)",
+      "type": "qualitative"
+    }
+  ]
+}
