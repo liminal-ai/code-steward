@@ -1,0 +1,27 @@
+{
+  "eval_id": 0,
+  "eval_name": "branch-full-review",
+  "prompt": "do a full code review of my branch against main",
+  "assertions": [
+    {
+      "text": "Scope mode is detected as 'branch' (comparing current branch against a base branch)",
+      "type": "scope_detection"
+    },
+    {
+      "text": "Changed files list is present in scope-determination.md showing files that differ between master and main",
+      "type": "scope_detail"
+    },
+    {
+      "text": "All 6 review types are selected: standard, security, performance, architecture, test-coverage, and silent-failure",
+      "type": "review_selection"
+    },
+    {
+      "text": "Subagent launch was attempted for each of the 6 selected review types",
+      "type": "orchestration"
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings or a synthesis output",
+      "type": "output_completeness"
+    }
+  ]
+}

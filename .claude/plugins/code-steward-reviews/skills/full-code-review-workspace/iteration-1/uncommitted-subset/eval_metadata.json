@@ -1,0 +1,23 @@
+{
+  "eval_id": 1,
+  "eval_name": "uncommitted-subset",
+  "prompt": "review my local changes, just standard and security",
+  "assertions": [
+    {
+      "text": "Scope mode is detected as 'uncommitted' (reviewing local staged/unstaged changes, not branch comparison or PR)",
+      "type": "scope_detection"
+    },
+    {
+      "text": "Only standard and security review types are selected — NOT performance, architecture, test-coverage, or silent-failure",
+      "type": "review_selection"
+    },
+    {
+      "text": "No more than 2 review subagents were launched (one for standard, one for security)",
+      "type": "orchestration"
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "type": "output_completeness"
+    }
+  ]
+}

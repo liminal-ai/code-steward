@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'uncommitted' (reviewing local staged/unstaged changes, not branch comparison or PR)",
+      "passed": true,
+      "evidence": "scope-determination.md: '## Mode Detected: Uncommitted' with 'The user said review my local changes -- this maps to Uncommitted mode per the skill mode detection rules.' Correctly ran git diff --stat and git diff --staged --stat."
+    },
+    {
+      "text": "Only standard and security review types are selected — NOT performance, architecture, test-coverage, or silent-failure",
+      "passed": true,
+      "evidence": "review-selection.md shows explicit table with Standard=Yes, Security=Yes, and Performance/Architecture/Test Coverage/Silent Failure all marked 'No | Not requested'. States '2 review types selected: standard-review, security-review.'"
+    },
+    {
+      "text": "No more than 2 review subagents were launched (one for standard, one for security)",
+      "passed": true,
+      "evidence": "orchestration-log.md confirms only 2 reviews executed (standard-review and security-review). Agent tool was unavailable so executed inline, but only 2 review passes were performed as requested."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "passed": true,
+      "evidence": "final-report.md exists with complete synthesis output. Clean review — no findings reached >=80 confidence threshold. Includes verification summary, all four logs, positive observations, and structured JSON block."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.00
+  }
+}

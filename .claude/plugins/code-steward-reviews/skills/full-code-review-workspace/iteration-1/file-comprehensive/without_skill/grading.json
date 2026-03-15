@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'file' (ad-hoc codebase review of specific directories, no diff scoping)",
+      "passed": true,
+      "evidence": "scope-determination.md identifies the two specific directories and their SKILL.md files. Notes 'The task specified two explicit directory paths' — correctly identified file mode."
+    },
+    {
+      "text": "Scope references the two specific skill directories (standard-review and security-review)",
+      "passed": true,
+      "evidence": "scope-determination.md lists both: '.claude/plugins/code-steward-reviews/skills/standard-review/' and '.claude/plugins/code-steward-reviews/skills/security-review/' with file details."
+    },
+    {
+      "text": "All 6 review types are selected (user said 'comprehensive')",
+      "passed": false,
+      "evidence": "Performed a comprehensive multi-dimensional review covering 8 review dimensions, but did not formally separate into the 6 defined review types (standard, security, performance, architecture, test-coverage, silent-failure). No review-selection output produced."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "passed": true,
+      "evidence": "final-report.md exists with 17 total findings (4 High, 13 Medium) including cross-skill consistency issues."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}

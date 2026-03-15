@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'branch' (comparing current branch against a base branch)",
+      "passed": true,
+      "evidence": "scope-determination.md opens with '**Branch mode** -- The user requested full code review of my branch against main.' Correctly identified branch mode and determined base as initial commit when main branch didn't exist locally."
+    },
+    {
+      "text": "Changed files list is present in scope-determination.md showing files that differ between master and main",
+      "passed": true,
+      "evidence": "scope-determination.md contains detailed file list: '328 files changed, ~72,142 lines of insertions across 3 commits' with categorized breakdown into source code (34 files), test code, config, docs, plugin definitions, and research artifacts."
+    },
+    {
+      "text": "All 6 review types are selected: standard, security, performance, architecture, test-coverage, and silent-failure",
+      "passed": true,
+      "evidence": "review-selection.md: 'Selected Reviews: All 6' with a table showing all 6 types selected with 'Default for full review' rationale for each."
+    },
+    {
+      "text": "Subagent launch was attempted for each of the 6 selected review types",
+      "passed": false,
+      "evidence": "orchestration-log.md: 'The Agent tool is not available in this execution context.' No subagents were launched. All 6 reviews were executed sequentially inline by the orchestrating agent. The skill correctly identified this as a limitation and adapted."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings or a synthesis output",
+      "passed": true,
+      "evidence": "final-report.md exists with complete synthesis output: 11 verified findings (2 critical, 4 high, 5 medium), positive observations, summary table, and structured JSON block. Full verification summary with synthesis metadata."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.80
+  }
+}

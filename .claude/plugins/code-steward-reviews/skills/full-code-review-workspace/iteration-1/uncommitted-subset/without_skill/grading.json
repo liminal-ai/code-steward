@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'uncommitted' (reviewing local staged/unstaged changes, not branch comparison or PR)",
+      "passed": true,
+      "evidence": "scope-determination.md: 'Scope was determined by running git status and git diff against the current working tree on branch master. There are no staged changes. All changes are either unstaged modifications to tracked files or untracked new files.'"
+    },
+    {
+      "text": "Only standard and security review types are selected — NOT performance, architecture, test-coverage, or silent-failure",
+      "passed": false,
+      "evidence": "The baseline review included a 'Test gap' finding about empty string repoPath behavior, which is test coverage territory — outside the requested standard + security scope. No formal review type selection was performed."
+    },
+    {
+      "text": "No more than 2 review subagents were launched (one for standard, one for security)",
+      "passed": true,
+      "evidence": "No subagents were launched at all. The entire review was performed inline as a single pass. Trivially satisfies the <=2 constraint."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "passed": true,
+      "evidence": "final-report.md exists with 5 findings (SEC-1, SEC-4, S-1, S-2, plus a test gap observation)."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "code-steward-marketplace",
+  "owner": {
+    "name": "Code Steward"
+  },
+  "plugins": [
+    {
+      "name": "code-steward-reviews",
+      "source": "./",
+      "description": "Comprehensive PR and codebase review skills with six specialized review types: standard, security, performance, architecture, test coverage, and silent failure detection",
+      "version": "0.1.0"
+    }
+  ]
+}

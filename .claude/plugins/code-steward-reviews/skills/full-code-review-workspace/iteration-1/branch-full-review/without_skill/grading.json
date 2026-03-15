@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'branch' (comparing current branch against a base branch)",
+      "passed": true,
+      "evidence": "scope-determination.md identifies 'Current branch: master', 'Base branch: main', and 'Effective base: commit b8a2395'. Correctly determined branch topology."
+    },
+    {
+      "text": "Changed files list is present in scope-determination.md showing files that differ between master and main",
+      "passed": true,
+      "evidence": "scope-determination.md contains detailed file list covering committed code (Story 0 Foundation), uncommitted code (Story 1), documentation changes, and test infrastructure with specific file paths."
+    },
+    {
+      "text": "All 6 review types are selected: standard, security, performance, architecture, test-coverage, and silent-failure",
+      "passed": false,
+      "evidence": "Performed a single-pass review covering multiple dimensions (code quality, security, tests, build config) but did not formally separate into 6 distinct review types with independent passes. No review-selection output was produced."
+    },
+    {
+      "text": "Subagent launch was attempted for each of the 6 selected review types",
+      "passed": false,
+      "evidence": "No subagents were launched. The baseline performed all review work inline as a single monolithic review pass."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings or a synthesis output",
+      "passed": true,
+      "evidence": "final-report.md exists with 5 findings, verification gate results (typecheck, tests, lint, npm audit), and an overall 'Approve with suggestions' verdict."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5,
+    "pass_rate": 0.60
+  }
+}

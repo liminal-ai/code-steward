@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Scope mode is detected as 'file' (ad-hoc codebase review of specific directories, no diff scoping)",
+      "passed": true,
+      "evidence": "scope-determination.md: '## Mode Detected: File Mode' with 'The user specified particular directories to review as-is. This is an ad-hoc codebase review of specific directories, not scoped to a diff.'"
+    },
+    {
+      "text": "Scope references the two specific skill directories (standard-review and security-review)",
+      "passed": true,
+      "evidence": "scope-determination.md lists both paths: '1. .claude/plugins/code-steward-reviews/skills/standard-review/ Contains: SKILL.md (532 lines)' and '2. .claude/plugins/code-steward-reviews/skills/security-review/ Contains: SKILL.md (442 lines)'"
+    },
+    {
+      "text": "All 6 review types are selected (user said 'comprehensive')",
+      "passed": true,
+      "evidence": "review-selection.md: '## Selected Review Types: All 6' with table showing all 6 selected with 'User requested comprehensive / all 6' rationale. Includes adaptation notes for non-code files."
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "passed": true,
+      "evidence": "final-report.md exists with 6 verified findings (0 critical, 2 high, 4 medium), architecture scorecard, verification summary with all four logs, and structured JSON block."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.00
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "skill_name": "full-code-review",
+  "evals": [
+    {
+      "id": 0,
+      "name": "branch-full-review",
+      "prompt": "do a full code review of my branch against main",
+      "expected_output": "Detects branch mode, selects all 6 review types, launches parallel subagents, runs synthesis, delivers consolidated report",
+      "files": [],
+      "expectations": [
+        "Scope mode is detected as 'branch' (comparing current branch against a base branch)",
+        "Changed files list is present in scope-determination.md showing files that differ between master and main",
+        "All 6 review types are selected: standard, security, performance, architecture, test-coverage, and silent-failure",
+        "Subagent launch was attempted for each of the 6 selected review types",
+        "A final report file (final-report.md) exists with review findings or a synthesis output"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "uncommitted-subset",
+      "prompt": "review my local changes, just standard and security",
+      "expected_output": "Detects uncommitted mode, selects only standard + security review types, launches 2 subagents, runs synthesis, delivers consolidated report",
+      "files": [],
+      "expectations": [
+        "Scope mode is detected as 'uncommitted' (reviewing local staged/unstaged changes, not branch comparison or PR)",
+        "Only standard and security review types are selected — NOT performance, architecture, test-coverage, or silent-failure",
+        "No more than 2 review subagents were launched (one for standard, one for security)",
+        "A final report file (final-report.md) exists with review findings"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "file-comprehensive",
+      "prompt": "comprehensive review of the skills in .claude/plugins/code-steward-reviews/skills/standard-review/ and .claude/plugins/code-steward-reviews/skills/security-review/",
+      "expected_output": "Detects file mode (ad-hoc review, no diff), selects all 6 review types, launches parallel subagents reviewing those specific directories, delivers consolidated report",
+      "files": [],
+      "expectations": [
+        "Scope mode is detected as 'file' (ad-hoc codebase review of specific directories, no diff scoping)",
+        "Scope references the two specific skill directories (standard-review and security-review)",
+        "All 6 review types are selected (user said 'comprehensive')",
+        "A final report file (final-report.md) exists with review findings"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "eval_id": 2,
+  "eval_name": "file-comprehensive",
+  "prompt": "comprehensive review of the skills in .claude/plugins/code-steward-reviews/skills/standard-review/ and .claude/plugins/code-steward-reviews/skills/security-review/",
+  "assertions": [
+    {
+      "text": "Scope mode is detected as 'file' (ad-hoc codebase review of specific directories, no diff scoping)",
+      "type": "scope_detection"
+    },
+    {
+      "text": "Scope references the two specific skill directories (standard-review and security-review)",
+      "type": "scope_detail"
+    },
+    {
+      "text": "All 6 review types are selected (user said 'comprehensive')",
+      "type": "review_selection"
+    },
+    {
+      "text": "A final report file (final-report.md) exists with review findings",
+      "type": "output_completeness"
+    }
+  ]
+}
