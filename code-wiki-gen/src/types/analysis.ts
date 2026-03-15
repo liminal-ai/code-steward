@@ -48,30 +48,3 @@ export interface AnalyzedRelationship {
   target: string;
   type: "import" | "inheritance" | "implementation" | "composition" | "usage";
 }
-
-export interface RawAnalysisOutput {
-  functions: RawNode[];
-  relationships: RawCallRelationship[];
-  file_tree: Record<string, unknown>;
-  summary: Record<string, unknown>;
-}
-
-export interface RawNode {
-  id: string;
-  name: string;
-  component_type: string;
-  file_path: string;
-  relative_path: string;
-  start_line: number;
-  end_line: number;
-  depends_on: string[];
-  parameters?: string[];
-  class_name?: string;
-}
-
-export interface RawCallRelationship {
-  caller: string;
-  callee: string;
-  call_line?: number;
-  is_resolved: boolean;
-}

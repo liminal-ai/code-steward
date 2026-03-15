@@ -1,12 +1,153 @@
-import { NotImplementedError } from "../types/common.js";
-import type {
-  RawAnalysisOutput,
-  ResolvedConfiguration,
-} from "../types/index.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { ZodError } from "zod";
+import { getPythonCommand } from "../adapters/python.js";
+import { runSubprocess } from "../adapters/subprocess.js";
+import { rawAnalysisOutputSchema } from "../contracts/analysis.js";
+import type { ResolvedConfiguration } from "../types/index.js";
+import type { RawAnalysisOutput } from "./raw-output.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const ANALYSIS_SCRIPT_PATH = path.resolve(
+  __dirname,
+  "./scripts/analyze_repository.py",
+);
+const ANALYSIS_TIMEOUT_MS = 60_000;
+
+type AnalysisAdapterErrorCode =
+  | "DEPENDENCY_MISSING"
+  | "PATH_ERROR"
+  | "ANALYSIS_ERROR";
+
+export class AnalysisAdapterError extends Error {
+  constructor(
+    public readonly code: AnalysisAdapterErrorCode,
+    message: string,
+    public readonly details?: unknown,
+  ) {
+    super(message);
+    this.name = "AnalysisAdapterError";
+  }
+}
 
 export const runAnalysis = async (
-  _repoPath: string,
-  _config: ResolvedConfiguration,
+  repoPath: string,
+  config: ResolvedConfiguration,
 ): Promise<RawAnalysisOutput> => {
-  throw new NotImplementedError("runAnalysis");
+  const pythonCommand = await getPythonCommand();
+
+  if (!pythonCommand) {
+    throw new AnalysisAdapterError(
+      "DEPENDENCY_MISSING",
+      "Python 3.11+ is required for repository analysis.",
+    );
+  }
+
+  try {
+    const result = await runSubprocess(
+      pythonCommand,
+      buildAnalysisArgs(repoPath, config),
+      {
+        cwd: repoPath,
+        timeoutMs: ANALYSIS_TIMEOUT_MS,
+      },
+    );
+
+    if (result.exitCode !== 0) {
+      throw new AnalysisAdapterError(
+        "ANALYSIS_ERROR",
+        "Python analysis subprocess failed.",
+        {
+          exitCode: result.exitCode,
+          stderr: result.stderr.trim(),
+          stdout: result.stdout.trim(),
+        },
+      );
+    }
+
+    return parseRawAnalysisOutput(result.stdout);
+  } catch (error) {
+    if (error instanceof AnalysisAdapterError) {
+      throw error;
+    }
+
+    if (isNodeError(error) && error.code === "ENOENT") {
+      throw new AnalysisAdapterError(
+        "DEPENDENCY_MISSING",
+        "Python 3.11+ is required for repository analysis.",
+        { cause: error.message },
+      );
+    }
+
+    if (isTimeoutError(error)) {
+      throw new AnalysisAdapterError(
+        "ANALYSIS_ERROR",
+        "Python analysis subprocess timed out.",
+        { cause: getErrorMessage(error) },
+      );
+    }
+
+    throw new AnalysisAdapterError(
+      "ANALYSIS_ERROR",
+      "Python analysis subprocess failed.",
+      { cause: getErrorMessage(error) },
+    );
+  }
 };
+
+const buildAnalysisArgs = (
+  repoPath: string,
+  config: ResolvedConfiguration,
+): string[] => [
+  ANALYSIS_SCRIPT_PATH,
+  "--repo-path",
+  repoPath,
+  ...flattenFlag("--include", config.includePatterns),
+  ...flattenFlag("--exclude", config.excludePatterns),
+];
+
+const flattenFlag = (flag: string, values: string[]): string[] =>
+  values.flatMap((value) => [flag, value]);
+
+const parseRawAnalysisOutput = (stdout: string): RawAnalysisOutput => {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(stdout);
+  } catch (error) {
+    throw new AnalysisAdapterError(
+      "ANALYSIS_ERROR",
+      "Python analysis subprocess returned invalid JSON.",
+      {
+        cause: getErrorMessage(error),
+        stdout: stdout.trim(),
+      },
+    );
+  }
+
+  try {
+    return rawAnalysisOutputSchema.parse(parsed);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new AnalysisAdapterError(
+        "ANALYSIS_ERROR",
+        "Python analysis subprocess returned an invalid payload shape.",
+        { issues: error.issues },
+      );
+    }
+
+    throw error;
+  }
+};
+
+const isTimeoutError = (error: unknown): boolean =>
+  error instanceof Error && error.message.includes("timed out");
+
+const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
+  error instanceof Error && "code" in error;
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Unknown analysis adapter error";
