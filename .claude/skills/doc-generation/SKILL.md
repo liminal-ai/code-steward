@@ -40,14 +40,13 @@ If not available, stop and tell the user.
 
 ### 2. Parser Dependencies
 ```bash
-python3 "$SKILL_SCRIPTS/analyze_repo.py" --check-deps
+python3 "$SKILL_SCRIPTS/analyze_repo.py" --check-deps /path/to/repo
 ```
-This reports which tree-sitter parsers are installed and which are missing. If parsers for the target repo's languages are missing, stop and tell the user:
-```
-Install missing parsers: pip install tree-sitter tree-sitter-python tree-sitter-javascript tree-sitter-typescript tree-sitter-java tree-sitter-c tree-sitter-cpp tree-sitter-c-sharp tree-sitter-kotlin tree-sitter-php
-```
+When a repo path is provided, this scans the repo for file extensions, determines which languages are present, and only checks whether *those* parsers are installed. It exits 0 if all needed parsers are available, exits 1 if any are missing.
 
-Only install what's needed for the target repo's languages. Python analysis uses stdlib `ast` and needs no extra packages.
+Without a repo path, it checks all parsers globally (useful for a one-time environment setup).
+
+If needed parsers are missing, the command prints install instructions. Python analysis uses stdlib `ast` and never requires tree-sitter.
 
 ### 3. Git Repository
 The target repo must be a git repository. If `git rev-parse HEAD` fails in the repo directory, stop and tell the user: "This directory is not a git repository. Documentation versioning requires git."
@@ -72,6 +71,7 @@ python3 "$SKILL_SCRIPTS/analyze_repo.py" /path/to/repo --output /path/to/repo/.d
 **Scoping options** (pass as needed):
 - `--include "*.py,*.ts"` — Only analyze files matching these patterns
 - `--exclude "*test*,*spec*,*mock*"` — Skip files matching these patterns
+- `--focus "src/core,src/api"` — Tag directories for deeper documentation (see Phase 3)
 - `--max-files 300` — Limit total files analyzed
 - `--verbose` — Show detailed logging
 
@@ -128,6 +128,8 @@ Using the analysis JSON, group components into logical modules. This is your rea
 ### Phase 3 — Module Documentation
 
 Process modules leaf-first (modules with no sub-modules first, then parent modules).
+
+**Focus areas:** If `--focus` was used, each component in the analysis JSON has an `is_focus` field (true/false). Modules containing focus components get deeper documentation: more detailed component descriptions, more code snippets, additional Mermaid diagrams for internal flows. Non-focus modules get standard documentation.
 
 For each module, use the **Read** tool to read the actual source files of its components, then write a markdown documentation file.
 

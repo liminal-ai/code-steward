@@ -44,7 +44,10 @@ This skill is invoked by Claude Code when you ask it to generate documentation f
 
 ### Quick Check
 ```bash
-# Verify parser dependencies
+# Verify parser dependencies for a specific repo (only checks needed languages)
+python3 scripts/analyze_repo.py --check-deps /path/to/repo
+
+# Verify all parser dependencies globally
 python3 scripts/analyze_repo.py --check-deps
 
 # Run structural analysis only
@@ -52,6 +55,9 @@ python3 scripts/analyze_repo.py /path/to/repo --output analysis.json
 
 # Scoped analysis
 python3 scripts/analyze_repo.py /path/to/repo --include "*.py,*.ts" --exclude "*test*"
+
+# Focus on specific directories for deeper documentation
+python3 scripts/analyze_repo.py /path/to/repo --focus "src/core,src/api"
 ```
 
 ## Output

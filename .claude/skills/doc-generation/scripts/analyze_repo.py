@@ -7,7 +7,7 @@ a JSON report of components, relationships, and structure.
 
 Usage:
     python3 analyze_repo.py /path/to/repo [--output output.json] [--max-files 500]
-    python3 analyze_repo.py --check-deps
+    python3 analyze_repo.py --check-deps [/path/to/repo]
 
 Adapted from CodeWiki (MIT License) — extracts structural analysis only,
 no LLM calls. Claude handles clustering and documentation directly.
@@ -58,9 +58,13 @@ def get_repo_name(repo_path: str) -> str:
     return Path(repo_path).resolve().name
 
 
-def check_dependencies():
-    """Check which tree-sitter parsers are available."""
-    parsers = {
+def check_dependencies(repo_path: str = None):
+    """Check which tree-sitter parsers are available.
+
+    If repo_path is provided, only checks parsers needed for languages
+    detected in that repo. Otherwise checks all parsers.
+    """
+    all_parsers = {
         "python": "tree_sitter_python",
         "javascript": "tree_sitter_javascript",
         "typescript": "tree_sitter_typescript",
@@ -72,7 +76,29 @@ def check_dependencies():
         "php": "tree_sitter_php",
     }
 
-    # Also check base tree_sitter
+    # Map file extensions to language keys
+    ext_to_lang = {
+        ".py": "python", ".js": "javascript", ".jsx": "javascript",
+        ".ts": "typescript", ".tsx": "typescript",
+        ".java": "java", ".c": "c", ".h": "c",
+        ".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp", ".hpp": "cpp",
+        ".cs": "csharp", ".kt": "kotlin", ".kts": "kotlin",
+        ".php": "php",
+    }
+
+    # Determine which languages are needed
+    needed_languages = None
+    if repo_path:
+        repo = Path(repo_path)
+        if repo.is_dir():
+            found_langs = set()
+            for f in repo.rglob("*"):
+                if f.is_file() and f.suffix in ext_to_lang:
+                    found_langs.add(ext_to_lang[f.suffix])
+            needed_languages = found_langs
+            print(f"Languages detected in repo: {sorted(found_langs) if found_langs else 'none'}", file=sys.stderr)
+
+    # Check base tree_sitter
     results = {}
     try:
         import tree_sitter
@@ -80,7 +106,7 @@ def check_dependencies():
     except ImportError:
         results["tree_sitter_core"] = False
 
-    for lang, module_name in parsers.items():
+    for lang, module_name in all_parsers.items():
         try:
             __import__(module_name)
             results[lang] = True
@@ -90,11 +116,32 @@ def check_dependencies():
     # Python analyzer uses stdlib ast, always available
     results["python"] = True
 
-    print(json.dumps({"parsers": results}, indent=2))
+    # Build output
+    output = {"parsers": results}
+    if needed_languages is not None:
+        output["needed_for_repo"] = sorted(needed_languages)
+        output["repo_path"] = str(repo_path)
 
-    missing = [k for k, v in results.items() if not v]
+    print(json.dumps(output, indent=2))
+
+    # Determine what's actually missing
+    if needed_languages is not None:
+        # Repo-aware mode: only fail if a needed parser is missing
+        missing = [
+            lang for lang in needed_languages
+            if not results.get(lang, False)
+            and lang != "python"  # Python uses stdlib ast, never missing
+        ]
+        # Also need tree_sitter core if any non-Python language is needed
+        non_python_needed = needed_languages - {"python"}
+        if non_python_needed and not results.get("tree_sitter_core", False):
+            missing.insert(0, "tree_sitter_core")
+    else:
+        # Global mode: report all missing
+        missing = [k for k, v in results.items() if not v]
+
     if missing:
-        print(f"\nMissing: {', '.join(missing)}", file=sys.stderr)
+        print(f"\nMissing for this repo: {', '.join(missing)}", file=sys.stderr)
         pip_packages = []
         for k in missing:
             if k == "tree_sitter_core":
@@ -108,7 +155,10 @@ def check_dependencies():
         print("Install with: pip install " + " ".join(pip_packages), file=sys.stderr)
         sys.exit(1)
     else:
-        print("\nAll parsers available.", file=sys.stderr)
+        if needed_languages is not None:
+            print(f"\nAll parsers available for this repo's languages.", file=sys.stderr)
+        else:
+            print("\nAll parsers available.", file=sys.stderr)
         sys.exit(0)
 
 
@@ -117,6 +167,7 @@ def analyze(
     max_files: int = 0,
     include_patterns=None,
     exclude_patterns=None,
+    focus_dirs=None,
 ) -> dict:
     """
     Run full structural analysis on a repository.
@@ -126,6 +177,7 @@ def analyze(
         max_files: Maximum number of code files to analyze (0 = unlimited)
         include_patterns: Optional list of file glob patterns to include
         exclude_patterns: Optional list of file glob patterns to exclude
+        focus_dirs: Optional list of directories to tag as focus areas
 
     Returns:
         Analysis result as a dictionary ready for JSON serialization
@@ -183,6 +235,14 @@ def analyze(
     for func_dict in result["functions"]:
         comp_id = func_dict.get("component_id") or func_dict.get("id", "")
         if comp_id:
+            # Tag focus components
+            if focus_dirs:
+                rel_path = func_dict.get("relative_path") or func_dict.get("file_path", "")
+                func_dict["is_focus"] = any(
+                    str(rel_path).startswith(fd) for fd in focus_dirs
+                )
+            else:
+                func_dict["is_focus"] = False
             components[comp_id] = func_dict
 
     # Build graph and find leaf nodes
@@ -266,6 +326,7 @@ def analyze(
         "components": components,
         "relationships": result["relationships"],
         "leaf_nodes": leaf_nodes,
+        "focus_dirs": focus_dirs or [],
         "file_tree": file_tree,
     }
 
@@ -298,14 +359,18 @@ def main():
         help="Comma-separated file patterns to exclude (e.g. '*test*,*spec*')",
     )
     parser.add_argument(
+        "--focus", "-f",
+        help="Comma-separated directories/modules to document in more detail (e.g. 'src/core,src/api')",
+    )
+    parser.add_argument(
         "--check-deps", action="store_true",
-        help="Check parser dependencies and exit",
+        help="Check parser dependencies and exit. Optionally pass repo_path to check only needed parsers.",
     )
 
     args = parser.parse_args()
 
     if args.check_deps:
-        check_dependencies()
+        check_dependencies(repo_path=args.repo_path)
         return
 
     if not args.repo_path:
@@ -321,12 +386,14 @@ def main():
 
     include = args.include.split(",") if args.include else None
     exclude = args.exclude.split(",") if args.exclude else None
+    focus = args.focus.split(",") if args.focus else None
 
     result = analyze(
         str(repo_path),
         max_files=args.max_files,
         include_patterns=include,
         exclude_patterns=exclude,
+        focus_dirs=focus,
     )
 
     output_json = json.dumps(result, indent=2, default=str)

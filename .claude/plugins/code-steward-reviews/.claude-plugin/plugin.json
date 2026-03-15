@@ -1,0 +1,9 @@
+{
+  "name": "code-steward-reviews",
+  "version": "0.1.0",
+  "description": "Comprehensive PR and codebase review skills with six specialized review types: standard, security, performance, architecture, test coverage, and silent failure detection",
+  "author": {
+    "name": "Code Steward"
+  },
+  "license": "MIT"
+}
