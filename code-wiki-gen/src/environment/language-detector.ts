@@ -1,5 +1,61 @@
-import { NotImplementedError } from "../types/common.js";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 
-export const detectLanguages = async (_repoPath: string): Promise<string[]> => {
-  throw new NotImplementedError("detectLanguages");
+export const detectLanguages = async (repoPath: string): Promise<string[]> => {
+  const languages = new Set<string>();
+  await walkRepository(repoPath, languages);
+  return [...languages].sort();
+};
+
+const IGNORED_DIRECTORIES = new Set([
+  ".git",
+  ".hg",
+  ".svn",
+  "build",
+  "coverage",
+  "dist",
+  "node_modules",
+]);
+
+const LANGUAGE_BY_EXTENSION: Record<string, string> = {
+  ".cjs": "javascript",
+  ".cts": "typescript",
+  ".js": "javascript",
+  ".jsx": "javascript",
+  ".mjs": "javascript",
+  ".mts": "typescript",
+  ".py": "python",
+  ".ts": "typescript",
+  ".tsx": "typescript",
+};
+
+const walkRepository = async (
+  directoryPath: string,
+  languages: Set<string>,
+): Promise<void> => {
+  const entries = await readdir(directoryPath, { withFileTypes: true });
+
+  await Promise.all(
+    entries.map(async (entry) => {
+      if (entry.isDirectory()) {
+        if (IGNORED_DIRECTORIES.has(entry.name)) {
+          return;
+        }
+
+        await walkRepository(path.join(directoryPath, entry.name), languages);
+        return;
+      }
+
+      if (!entry.isFile()) {
+        return;
+      }
+
+      const extension = path.extname(entry.name).toLowerCase();
+      const language = LANGUAGE_BY_EXTENSION[extension];
+
+      if (language) {
+        languages.add(language);
+      }
+    }),
+  );
 };

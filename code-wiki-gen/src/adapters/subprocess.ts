@@ -1,4 +1,4 @@
-import { NotImplementedError } from "../types/common.js";
+import { spawn } from "node:child_process";
 
 export interface SubprocessResult {
   stdout: string;
@@ -7,9 +7,68 @@ export interface SubprocessResult {
 }
 
 export const runSubprocess = async (
-  _command: string,
-  _args: string[],
-  _options?: { cwd?: string; timeoutMs?: number },
+  command: string,
+  args: string[],
+  options?: { cwd?: string; timeoutMs?: number },
 ): Promise<SubprocessResult> => {
-  throw new NotImplementedError("runSubprocess");
+  const timeoutMs = options?.timeoutMs ?? 30_000;
+
+  return await new Promise<SubprocessResult>((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: options?.cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+    let finished = false;
+
+    const timeout = setTimeout(() => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      child.kill("SIGTERM");
+      reject(
+        new Error(
+          `Subprocess timed out after ${timeoutMs}ms: ${command} ${args.join(" ")}`,
+        ),
+      );
+    }, timeoutMs);
+
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => {
+      stdout += chunk;
+    });
+
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+
+    child.once("error", (error) => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      clearTimeout(timeout);
+      reject(error);
+    });
+
+    child.once("close", (exitCode) => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      clearTimeout(timeout);
+      resolve({
+        exitCode: exitCode ?? 1,
+        stderr,
+        stdout,
+      });
+    });
+  });
 };
