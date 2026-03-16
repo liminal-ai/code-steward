@@ -1,8 +1,22 @@
+import { readFile, rm } from "node:fs/promises";
+import path from "node:path";
+
 import { createAgentSDKAdapter } from "../adapters/agent-sdk.js";
+import {
+  getChangedFilesBetweenCommits,
+  getHeadCommitHash,
+} from "../adapters/git.js";
+import { err } from "../types/common.js";
+import { moduleNameToFileName } from "../types/generation.js";
 import type {
+  ChangedFile,
   DocumentationRunRequest,
   DocumentationRunResult,
+  GeneratedModuleSet,
+  ModulePlan,
+  PlannedModule,
   ProgressCallback,
+  ResolvedRunConfig,
   RunSuccessData,
   ValidationAndReviewResult,
   ValidationResult,
@@ -26,6 +40,8 @@ import {
   ValidationAndReviewError,
   validateAndReview,
 } from "./stages/validation-and-review.js";
+import { mapToAffectedModules } from "./update/affected-module-mapper.js";
+import { readPriorGenerationState } from "./update/prior-state.js";
 
 export const generateDocumentation = async (
   request: DocumentationRunRequest,
@@ -42,13 +58,6 @@ export const generateDocumentation = async (
       "resolving-configuration",
       resolvedRequest.error,
     );
-  }
-
-  if (resolvedRequest.value.mode !== "full") {
-    return context.assembleFailureResult("computing-changes", {
-      code: "ORCHESTRATION_ERROR",
-      message: "Update mode is not implemented yet",
-    });
   }
 
   try {
@@ -76,6 +85,18 @@ export const generateDocumentation = async (
     );
   }
 
+  if (config.mode === "update") {
+    return runUpdateGeneration(config, context, outputPath);
+  }
+
+  return runFullGeneration(config, context, outputPath);
+};
+
+const runFullGeneration = async (
+  config: ResolvedRunConfig,
+  context: RunContext,
+  outputPath: string,
+): Promise<DocumentationRunResult> => {
   context.emitProgress("analyzing-structure");
   const analysisResult = await runStructuralAnalysis(config);
 
@@ -158,7 +179,7 @@ export const generateDocumentation = async (
       overviewResult.error,
       {
         commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs),
+        generatedFiles: collectOutputFiles(getModuleNames(modulePlan)),
         modulePlan,
         outputPath,
       },
@@ -173,25 +194,260 @@ export const generateDocumentation = async (
       treeResult.error,
       {
         commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs),
+        generatedFiles: collectOutputFiles(getModuleNames(modulePlan)),
         modulePlan,
         outputPath,
       },
     );
   }
 
-  const generatedFiles = collectGeneratedFiles(moduleDocs, {
-    includeMetadata: true,
-    includeModulePlan: true,
-  });
-  const provisionalRunData: RunSuccessData = {
+  return finalizeRun(config, context, {
     commitHash: analysis.commitHash,
-    generatedFiles,
-    metadataOutputPath: config.outputPath,
-    mode: config.mode,
+    generatedFiles: collectOutputFiles(getModuleNames(modulePlan), {
+      includeMetadata: true,
+      includeModulePlan: true,
+    }),
+    generatedFilesBeforeMetadata: collectOutputFiles(
+      getModuleNames(modulePlan),
+    ),
     modulePlan,
     outputPath,
+  });
+};
+
+const runUpdateGeneration = async (
+  config: ResolvedRunConfig,
+  context: RunContext,
+  outputPath: string,
+): Promise<DocumentationRunResult> => {
+  const priorStateResult = await readPriorGenerationState(outputPath);
+
+  if (!priorStateResult.ok) {
+    return context.assembleFailureResult(
+      "computing-changes",
+      priorStateResult.error,
+      {
+        outputPath,
+      },
+    );
+  }
+
+  context.emitProgress("computing-changes");
+  let currentCommitHash: string;
+  let changedFiles: ChangedFile[];
+
+  try {
+    currentCommitHash = await getHeadCommitHash(config.repoPath);
+    changedFiles = await getChangedFilesBetweenCommits(
+      config.repoPath,
+      priorStateResult.value.metadata.commitHash,
+      currentCommitHash,
+    );
+  } catch (error) {
+    return context.assembleFailureResult(
+      "computing-changes",
+      {
+        code: "ORCHESTRATION_ERROR",
+        details: error instanceof Error ? { cause: error.message } : error,
+        message: "Unable to compute changed files for update mode",
+      },
+      {
+        outputPath,
+      },
+    );
+  }
+
+  context.emitProgress("analyzing-structure");
+  const analysisResult = await runStructuralAnalysis(config);
+
+  if (!analysisResult.ok) {
+    return context.assembleFailureResult(
+      "analyzing-structure",
+      analysisResult.error,
+      {
+        commitHash: currentCommitHash,
+        outputPath,
+      },
+    );
+  }
+
+  const analysis = analysisResult.value;
+  context.emitProgress("planning-modules");
+  const affectedModulesResult = mapToAffectedModules(
+    changedFiles,
+    priorStateResult.value.modulePlan,
+    analysis,
+  );
+
+  if (!affectedModulesResult.ok) {
+    return context.assembleFailureResult(
+      "planning-modules",
+      affectedModulesResult.error,
+      {
+        commitHash: analysis.commitHash,
+        modulePlan: priorStateResult.value.modulePlan,
+        outputPath,
+      },
+    );
+  }
+
+  const { affectedModules, updatedPlan } = affectedModulesResult.value;
+
+  for (const warning of affectedModules.warnings) {
+    context.addWarning(warning);
+  }
+
+  const modulesToRegenerate = selectModules(
+    updatedPlan,
+    affectedModules.modulesToRegenerate,
+  );
+  const moduleDocsResult = await generateModuleDocs(
+    updatedPlan,
+    analysis,
+    config,
+    context.getSDK(),
+    (moduleName, completed, total) => {
+      context.emitProgress("generating-module", {
+        completed,
+        moduleName,
+        total,
+      });
+    },
+    modulesToRegenerate,
+  );
+
+  if (!moduleDocsResult.ok) {
+    return context.assembleFailureResult(
+      "generating-module",
+      moduleDocsResult.error,
+      {
+        commitHash: analysis.commitHash,
+        modulePlan: updatedPlan,
+        outputPath,
+      },
+    );
+  }
+
+  const moduleDocs = moduleDocsResult.value;
+  const removedModulesResult = await removeModulePages(
+    affectedModules.modulesToRemove,
+    outputPath,
+  );
+
+  if (!removedModulesResult.ok) {
+    return context.assembleFailureResult(
+      "writing-module-tree",
+      removedModulesResult.error,
+      {
+        commitHash: analysis.commitHash,
+        generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
+        modulePlan: updatedPlan,
+        outputPath,
+      },
+    );
+  }
+
+  if (affectedModules.overviewNeedsRegeneration) {
+    context.emitProgress("generating-overview");
+    const overviewDocsResult = await loadModuleDocsForOverview(
+      updatedPlan,
+      moduleDocs,
+      outputPath,
+    );
+
+    if (!overviewDocsResult.ok) {
+      return context.assembleFailureResult(
+        "generating-overview",
+        overviewDocsResult.error,
+        {
+          commitHash: analysis.commitHash,
+          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
+          modulePlan: updatedPlan,
+          outputPath,
+        },
+      );
+    }
+
+    const overviewResult = await generateOverview(
+      overviewDocsResult.value,
+      analysis,
+      config,
+      context.getSDK(),
+    );
+
+    if (!overviewResult.ok) {
+      return context.assembleFailureResult(
+        "generating-overview",
+        overviewResult.error,
+        {
+          commitHash: analysis.commitHash,
+          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
+          modulePlan: updatedPlan,
+          outputPath,
+        },
+      );
+    }
+  }
+
+  if (affectedModules.overviewNeedsRegeneration) {
+    const treeResult = await writeModuleTree(updatedPlan, outputPath);
+
+    if (!treeResult.ok) {
+      return context.assembleFailureResult(
+        "writing-module-tree",
+        treeResult.error,
+        {
+          commitHash: analysis.commitHash,
+          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
+          modulePlan: updatedPlan,
+          outputPath,
+        },
+      );
+    }
+  }
+
+  return finalizeRun(config, context, {
+    commitHash: analysis.commitHash,
+    generatedFiles: collectOutputFiles(getModuleNames(updatedPlan), {
+      includeMetadata: true,
+      includeModulePlan: true,
+    }),
+    generatedFilesBeforeMetadata: collectOutputFiles(
+      getModuleNames(updatedPlan),
+    ),
+    modulePlan: updatedPlan,
+    outputPath,
+    overviewRegenerated: affectedModules.overviewNeedsRegeneration,
+    unchangedModules: affectedModules.unchangedModules,
+    updatedModules: affectedModules.modulesToRegenerate,
+  });
+};
+
+const finalizeRun = async (
+  config: ResolvedRunConfig,
+  context: RunContext,
+  options: {
+    commitHash: string;
+    generatedFiles: string[];
+    generatedFilesBeforeMetadata: string[];
+    modulePlan: ModulePlan;
+    outputPath: string;
+    updatedModules?: string[];
+    unchangedModules?: string[];
+    overviewRegenerated?: boolean;
+  },
+): Promise<DocumentationRunResult> => {
+  const provisionalRunData: RunSuccessData = {
+    commitHash: options.commitHash,
+    generatedFiles: options.generatedFiles,
+    metadataOutputPath: config.outputPath,
+    mode: config.mode,
+    modulePlan: options.modulePlan,
+    outputPath: options.outputPath,
     qualityReviewPasses: 0,
+    unchangedModules: options.unchangedModules,
+    updatedModules: options.updatedModules,
+    overviewRegenerated: options.overviewRegenerated,
     validationResult: {
       errorCount: 0,
       findings: [],
@@ -206,8 +462,8 @@ export const generateDocumentation = async (
       metadataOutputPath: provisionalRunData.metadataOutputPath,
       mode: provisionalRunData.mode,
     },
-    modulePlan,
-    outputPath,
+    options.modulePlan,
+    options.outputPath,
   );
 
   if (!provisionalMetadataResult.ok) {
@@ -215,13 +471,10 @@ export const generateDocumentation = async (
       "writing-metadata",
       provisionalMetadataResult.error,
       {
-        commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs, {
-          includeMetadata: true,
-          includeModulePlan: true,
-        }),
-        modulePlan,
-        outputPath,
+        commitHash: options.commitHash,
+        generatedFiles: options.generatedFiles,
+        modulePlan: options.modulePlan,
+        outputPath: options.outputPath,
       },
     );
   }
@@ -231,7 +484,7 @@ export const generateDocumentation = async (
   try {
     context.emitProgress("validating-output");
     validationResult = await validateAndReview(
-      outputPath,
+      options.outputPath,
       config.qualityReview,
       context.getSDK(),
     );
@@ -243,7 +496,7 @@ export const generateDocumentation = async (
       context.emitProgress("quality-review");
     }
 
-    await cleanupPersistedRunFiles(outputPath);
+    await cleanupPersistedRunFiles(options.outputPath);
     const engineError =
       validationError !== null
         ? validationError.engineError
@@ -257,13 +510,10 @@ export const generateDocumentation = async (
       validationError?.stage ?? "validating-output",
       engineError,
       {
-        commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs, {
-          includeMetadata: true,
-          includeModulePlan: true,
-        }),
-        modulePlan,
-        outputPath,
+        commitHash: options.commitHash,
+        generatedFiles: options.generatedFiles,
+        modulePlan: options.modulePlan,
+        outputPath: options.outputPath,
         qualityReviewPasses: validationError?.qualityReviewPasses,
       },
     );
@@ -274,7 +524,7 @@ export const generateDocumentation = async (
   }
 
   if (validationResult.hasBlockingErrors) {
-    await cleanupPersistedRunFiles(outputPath);
+    await cleanupPersistedRunFiles(options.outputPath);
     return context.assembleFailureResult(
       "validating-output",
       {
@@ -282,10 +532,10 @@ export const generateDocumentation = async (
         message: "Generated output failed validation",
       },
       {
-        commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs),
-        modulePlan,
-        outputPath,
+        commitHash: options.commitHash,
+        generatedFiles: options.generatedFilesBeforeMetadata,
+        modulePlan: options.modulePlan,
+        outputPath: options.outputPath,
         qualityReviewPasses: validationResult.qualityReviewPasses,
         validationResult: validationResult.validationResult,
       },
@@ -298,26 +548,26 @@ export const generateDocumentation = async (
     validationResult: validationResult.validationResult,
   };
   const successWarnings = [
-    ...collectThinModuleWarnings(modulePlan),
+    ...collectThinModuleWarnings(options.modulePlan),
     ...collectValidationWarnings(validationResult.validationResult),
   ];
   context.emitProgress("writing-metadata");
   const finalMetadataResult = await writeRunMetadata(
     finalRunData,
-    modulePlan,
-    outputPath,
+    options.modulePlan,
+    options.outputPath,
   );
 
   if (!finalMetadataResult.ok) {
-    await cleanupPersistedRunFiles(outputPath);
+    await cleanupPersistedRunFiles(options.outputPath);
     return context.assembleFailureResult(
       "writing-metadata",
       finalMetadataResult.error,
       {
-        commitHash: analysis.commitHash,
-        generatedFiles: collectGeneratedFiles(moduleDocs),
-        modulePlan,
-        outputPath,
+        commitHash: options.commitHash,
+        generatedFiles: options.generatedFilesBeforeMetadata,
+        modulePlan: options.modulePlan,
+        outputPath: options.outputPath,
         qualityReviewPasses: validationResult.qualityReviewPasses,
         validationResult: validationResult.validationResult,
       },
@@ -332,16 +582,89 @@ export const generateDocumentation = async (
   return context.assembleSuccessResult(finalRunData);
 };
 
-const collectGeneratedFiles = (
-  moduleDocs: Map<string, { fileName: string }>,
+const removeModulePages = async (moduleNames: string[], outputPath: string) => {
+  try {
+    await Promise.all(
+      moduleNames.map((moduleName) =>
+        rm(path.join(outputPath, moduleNameToFileName(moduleName)), {
+          force: true,
+        }),
+      ),
+    );
+  } catch (error) {
+    return err(
+      "ORCHESTRATION_ERROR",
+      "Unable to remove obsolete module pages",
+      {
+        cause: error instanceof Error ? error.message : String(error),
+        modules: moduleNames,
+        outputPath,
+      },
+    );
+  }
+
+  return { ok: true as const, value: undefined };
+};
+
+const loadModuleDocsForOverview = async (
+  modulePlan: ModulePlan,
+  updatedModuleDocs: GeneratedModuleSet,
+  outputPath: string,
+): Promise<import("../types/index.js").EngineResult<GeneratedModuleSet>> => {
+  const hydratedDocs: GeneratedModuleSet = new Map(updatedModuleDocs);
+
+  try {
+    for (const module of modulePlan.modules) {
+      if (hydratedDocs.has(module.name)) {
+        continue;
+      }
+
+      const fileName = moduleNameToFileName(module.name);
+      const content = await readFile(path.join(outputPath, fileName), "utf8");
+
+      hydratedDocs.set(module.name, {
+        content,
+        description: module.description,
+        fileName,
+        filePath: path.join(outputPath, fileName),
+        moduleName: module.name,
+      });
+    }
+  } catch (error) {
+    return err(
+      "ORCHESTRATION_ERROR",
+      "Unable to load existing module documentation for overview regeneration",
+      error instanceof Error ? { cause: error.message } : error,
+    );
+  }
+
+  return {
+    ok: true as const,
+    value: hydratedDocs,
+  };
+};
+
+const selectModules = (
+  plan: ModulePlan,
+  moduleNames: string[],
+): PlannedModule[] => {
+  const moduleNameSet = new Set(moduleNames);
+  return plan.modules.filter((module) => moduleNameSet.has(module.name));
+};
+
+const getModuleNames = (plan: ModulePlan): string[] =>
+  plan.modules.map((module) => module.name);
+
+const collectOutputFiles = (
+  moduleNames: string[],
   options?: {
     includeMetadata?: boolean;
     includeModulePlan?: boolean;
   },
 ): string[] =>
   [
-    ...[...moduleDocs.values()]
-      .map((moduleDoc) => moduleDoc.fileName)
+    ...moduleNames
+      .map((moduleName) => moduleNameToFileName(moduleName))
       .sort((left, right) => left.localeCompare(right)),
     ...(options?.includeMetadata ? [".doc-meta.json"] : []),
     ...(options?.includeModulePlan ? [MODULE_PLAN_FILE_NAME] : []),

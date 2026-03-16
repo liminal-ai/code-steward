@@ -18,6 +18,31 @@ export const getHeadCommitHash = async (repoPath: string): Promise<string> => {
   return result.stdout.trim();
 };
 
+export const getChangedFilesBetweenCommits = async (
+  repoPath: string,
+  fromCommit: string,
+  toCommit: string,
+): Promise<import("../types/update.js").ChangedFile[]> => {
+  const result = await runSubprocess(
+    "git",
+    ["diff", "--name-status", "--find-renames", fromCommit, toCommit],
+    {
+      cwd: repoPath,
+      timeoutMs: 10_000,
+    },
+  );
+
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr || "Failed to compute changed files");
+  }
+
+  return result.stdout
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map(parseChangedFileLine);
+};
+
 export const isGitRepository = async (repoPath: string): Promise<boolean> => {
   const repositoryStatus = await getGitRepositoryStatus(repoPath);
   return repositoryStatus === "valid";
@@ -66,5 +91,44 @@ export const isGitAvailable = async (): Promise<boolean> => {
     return result.exitCode === 0;
   } catch {
     return false;
+  }
+};
+
+const parseChangedFileLine = (
+  line: string,
+): import("../types/update.js").ChangedFile => {
+  const parts = line.split("\t");
+  const status = parts[0] ?? "";
+
+  if (status.startsWith("R")) {
+    const oldPath = parts[1];
+    const newPath = parts[2];
+
+    if (!oldPath || !newPath) {
+      throw new Error(`Unable to parse renamed file entry: ${line}`);
+    }
+
+    return {
+      changeType: "renamed",
+      oldPath,
+      path: newPath,
+    };
+  }
+
+  const changedPath = parts[1];
+
+  if (!changedPath) {
+    throw new Error(`Unable to parse changed file entry: ${line}`);
+  }
+
+  switch (status) {
+    case "A":
+      return { changeType: "added", path: changedPath };
+    case "D":
+      return { changeType: "deleted", path: changedPath };
+    case "M":
+      return { changeType: "modified", path: changedPath };
+    default:
+      return { changeType: "modified", path: changedPath };
   }
 };

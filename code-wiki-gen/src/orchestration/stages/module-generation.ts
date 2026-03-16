@@ -35,9 +35,10 @@ export const generateModuleDocs = async (
   config: ResolvedRunConfig,
   sdk: AgentSDKAdapter,
   onModuleProgress?: ModuleProgressCallback,
+  modulesOverride?: PlannedModule[],
 ): Promise<EngineResult<GeneratedModuleSet>> => {
   const outputPath = resolveOutputPath(config);
-  const modules = [...plan.modules].sort((left, right) =>
+  const modules = [...(modulesOverride ?? plan.modules)].sort((left, right) =>
     left.name.localeCompare(right.name),
   );
   const fileNamesResult = getModuleFileNames(modules);

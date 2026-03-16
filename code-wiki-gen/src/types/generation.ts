@@ -13,6 +13,7 @@ export type GeneratedModuleSet = Map<string, GeneratedModulePage>;
 
 export interface GeneratedModulePage {
   moduleName: string;
+  description: string;
   fileName: string;
   content: string;
   filePath: string;
