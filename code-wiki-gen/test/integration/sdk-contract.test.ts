@@ -293,6 +293,17 @@ describe("public SDK integration contract", () => {
     expect(publishDocumentation).toBeTypeOf("function");
   });
 
+  it("TC-5.2a: all operations importable from package entry point", () => {
+    expect(sdk).toMatchObject({
+      analyzeRepository: expect.any(Function),
+      checkEnvironment: expect.any(Function),
+      generateDocumentation: expect.any(Function),
+      getDocumentationStatus: expect.any(Function),
+      publishDocumentation: expect.any(Function),
+      validateDocumentation: expect.any(Function),
+    });
+  });
+
   it("TC-3.1b: types importable", () => {
     const environmentRequest: EnvironmentCheckRequest = {
       repoPath: REPOS.validTs,
@@ -644,6 +655,23 @@ describe("public SDK integration contract", () => {
     expect(result.commitHash).toBe("0123456789abcdef0123456789abcdef01234567");
     expect(result.mode).toBe("full");
     expect(result.warnings).toEqual([]);
+  });
+
+  it("TC-5.2b: operations callable without application context", async () => {
+    const result = await getDocumentationStatus({
+      repoPath: REPOS.validTs,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        currentHeadCommitHash: null,
+        lastGeneratedAt: null,
+        lastGeneratedCommitHash: null,
+        outputPath: "docs/wiki",
+        state: "not_generated",
+      },
+    });
   });
 
   it("package entry point does not export internal modules", () => {
