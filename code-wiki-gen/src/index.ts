@@ -9,15 +9,3 @@ export { generateDocumentation } from "./orchestration/generate.js";
 export { publishDocumentation } from "./publish/publish.js";
 export { validateDocumentation } from "./validation/validate.js";
 export * from "./types/index.js";
-export type {
-  DocumentationProgressEvent,
-  DocumentationRunFailure,
-  DocumentationRunRequest,
-  DocumentationRunResult,
-  DocumentationRunSuccess,
-  DocumentationStage,
-  ProgressCallback,
-  ResolvedRunConfig,
-  RunSuccessData,
-  ValidationAndReviewResult,
-} from "./types/orchestration.js";
