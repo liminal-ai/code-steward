@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-03-16T10:23:43.119Z",
+  "commitHash": "2e89c5e0b68031587e807f3735687f213cba4b1e",
+  "outputPath": "cs-demo/docs/wiki",
+  "filesGenerated": [
+    ".doc-meta.json",
+    ".module-plan.json",
+    "app-shell--layout.md",
+    "boot-flow.md",
+    "data--utilities.md",
+    "module-tree.json",
+    "overview.md",
+    "repository-dashboard.md",
+    "settings.md",
+    "shared-components.md",
+    "ui-primitives.md"
+  ],
+  "componentCount": 39,
+  "mode": "full"
+}

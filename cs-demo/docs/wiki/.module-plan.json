@@ -1,0 +1,86 @@
+{
+  "modules": [
+    {
+      "name": "App Shell & Layout",
+      "description": "Top-level application layout, root page, and global providers including theming.",
+      "components": [
+        "cs-demo/app/layout.tsx",
+        "cs-demo/app/page.tsx",
+        "cs-demo/providers/theme-provider.tsx"
+      ]
+    },
+    {
+      "name": "Boot Flow",
+      "description": "Initial boot/onboarding page for the application.",
+      "components": [
+        "cs-demo/app/boot/page.tsx"
+      ]
+    },
+    {
+      "name": "Repository Dashboard",
+      "description": "Repository detail pages including layout, overview, docs, insights, issues, pulls, and review views.",
+      "components": [
+        "cs-demo/app/repo/[id]/layout.tsx",
+        "cs-demo/app/repo/[id]/page.tsx",
+        "cs-demo/app/repo/[id]/docs/page.tsx",
+        "cs-demo/app/repo/[id]/insights/page.tsx",
+        "cs-demo/app/repo/[id]/issues/page.tsx",
+        "cs-demo/app/repo/[id]/pulls/page.tsx",
+        "cs-demo/app/repo/[id]/review/page.tsx"
+      ]
+    },
+    {
+      "name": "Settings",
+      "description": "Application settings page.",
+      "components": [
+        "cs-demo/app/settings/page.tsx"
+      ]
+    },
+    {
+      "name": "Shared Components",
+      "description": "Reusable application-level components such as header, repo card, dialogs, and theme switcher.",
+      "components": [
+        "cs-demo/components/app-header.tsx",
+        "cs-demo/components/repo-card.tsx",
+        "cs-demo/components/add-repo-dialog.tsx",
+        "cs-demo/components/theme-switcher.tsx"
+      ]
+    },
+    {
+      "name": "UI Primitives",
+      "description": "Low-level, generic UI components (buttons, cards, dialogs, inputs, etc.) forming the design system.",
+      "components": [
+        "cs-demo/components/ui/alert.tsx",
+        "cs-demo/components/ui/avatar.tsx",
+        "cs-demo/components/ui/badge.tsx",
+        "cs-demo/components/ui/button.tsx",
+        "cs-demo/components/ui/card.tsx",
+        "cs-demo/components/ui/checkbox.tsx",
+        "cs-demo/components/ui/collapsible.tsx",
+        "cs-demo/components/ui/dialog.tsx",
+        "cs-demo/components/ui/dropdown-menu.tsx",
+        "cs-demo/components/ui/input.tsx",
+        "cs-demo/components/ui/label.tsx",
+        "cs-demo/components/ui/progress.tsx",
+        "cs-demo/components/ui/scroll-area.tsx",
+        "cs-demo/components/ui/separator.tsx",
+        "cs-demo/components/ui/sheet.tsx",
+        "cs-demo/components/ui/skeleton.tsx",
+        "cs-demo/components/ui/switch.tsx",
+        "cs-demo/components/ui/table.tsx",
+        "cs-demo/components/ui/tabs.tsx",
+        "cs-demo/components/ui/textarea.tsx",
+        "cs-demo/components/ui/tooltip.tsx"
+      ]
+    },
+    {
+      "name": "Data & Utilities",
+      "description": "Mock data layer with type definitions, sample fixtures, and general utility functions.",
+      "components": [
+        "cs-demo/lib/mock-data.ts",
+        "cs-demo/lib/utils.ts"
+      ]
+    }
+  ],
+  "unmappedComponents": []
+}

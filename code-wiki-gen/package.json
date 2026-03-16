@@ -27,11 +27,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:live": "npm run build && vitest run --config vitest.live.config.ts",
     "guard:no-test-changes": "tsx scripts/guard-no-test-changes.ts",
     "red-verify": "biome check . && tsc --noEmit",
     "verify": "biome check . && tsc --noEmit && vitest run",
+    "verify-live": "biome check . && tsc --noEmit && npm run test:live",
     "green-verify": "biome check . && tsc --noEmit && vitest run && tsx scripts/guard-no-test-changes.ts",
-    "verify-all": "biome check . && tsc --noEmit && vitest run && vitest run --config vitest.integration.config.ts"
+    "verify-all": "biome check . && tsc --noEmit && vitest run && npm run test:integration"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.2.76",

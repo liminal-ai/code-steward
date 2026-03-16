@@ -1,0 +1,30 @@
+[
+  {
+    "name": "App Shell & Layout",
+    "page": "app-shell--layout.md"
+  },
+  {
+    "name": "Boot Flow",
+    "page": "boot-flow.md"
+  },
+  {
+    "name": "Data & Utilities",
+    "page": "data--utilities.md"
+  },
+  {
+    "name": "Repository Dashboard",
+    "page": "repository-dashboard.md"
+  },
+  {
+    "name": "Settings",
+    "page": "settings.md"
+  },
+  {
+    "name": "Shared Components",
+    "page": "shared-components.md"
+  },
+  {
+    "name": "UI Primitives",
+    "page": "ui-primitives.md"
+  }
+]

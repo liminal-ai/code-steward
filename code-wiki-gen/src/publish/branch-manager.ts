@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, mkdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -76,9 +76,10 @@ export const createDocsBranch = async (
     }
 
     try {
-      await copyDocumentationFiles(
+      await syncDocumentationDirectory(
         options.repoPath,
         worktreePath,
+        relativeOutputPath,
         options.filesForCommit,
       );
     } catch (error) {
@@ -130,11 +131,17 @@ export const createDocsBranch = async (
   }
 };
 
-const copyDocumentationFiles = async (
+const syncDocumentationDirectory = async (
   repoPath: string,
   worktreePath: string,
+  relativeOutputPath: string,
   filesForCommit: string[],
 ): Promise<void> => {
+  const worktreeOutputPath = path.join(worktreePath, relativeOutputPath);
+
+  await rm(worktreeOutputPath, { force: true, recursive: true });
+  await mkdir(worktreeOutputPath, { recursive: true });
+
   for (const relativeFile of filesForCommit) {
     const sourcePath = path.join(repoPath, relativeFile);
     const targetPath = path.join(worktreePath, relativeFile);
