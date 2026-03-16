@@ -9,6 +9,11 @@ import {
   renderUsage,
 } from "citty";
 import {
+  installCancellationHandler,
+  resetCancellationState,
+  setCancellationNoticeEnabled,
+} from "./cli/cancellation.js";
+import {
   EXIT_OPERATIONAL_FAILURE,
   EXIT_USAGE_ERROR,
 } from "./cli/exit-codes.js";
@@ -38,9 +43,14 @@ export const mainCommand = defineCommand({
   subCommands,
 });
 
+resetCancellationState();
+installCancellationHandler();
+
 await runCli(process.argv.slice(2));
 
 async function runCli(args: string[]): Promise<void> {
+  setCancellationNoticeEnabled(!hasJsonFlag(args));
+
   if (args.length === 0) {
     await writeUsage(mainCommand);
     return;

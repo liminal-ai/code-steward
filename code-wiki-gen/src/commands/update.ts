@@ -1,4 +1,5 @@
 import { defineCommand } from "citty";
+import { finalizeCancellation } from "../cli/cancellation.js";
 import { mergeRunRequest } from "../cli/config-merger.js";
 import { EXIT_OPERATIONAL_FAILURE, mapToExitCode } from "../cli/exit-codes.js";
 import {
@@ -7,6 +8,7 @@ import {
   writeJsonError,
   writeJsonResult,
 } from "../cli/output.js";
+import { createProgressRenderer } from "../cli/progress.js";
 import { generateDocumentation } from "../orchestration/generate.js";
 
 export default defineCommand({
@@ -47,6 +49,7 @@ export default defineCommand({
     name: "update",
   },
   async run({ args }) {
+    const onProgress = createProgressRenderer(args.json);
     const requestResult = await mergeRunRequest(
       {
         config: args.config,
@@ -70,7 +73,15 @@ export default defineCommand({
       return;
     }
 
-    const result = await generateDocumentation(requestResult.value);
+    if (finalizeCancellation(args.json)) {
+      return;
+    }
+
+    const result = await generateDocumentation(requestResult.value, onProgress);
+
+    if (finalizeCancellation(args.json)) {
+      return;
+    }
 
     if (args.json) {
       if (result.success) {
