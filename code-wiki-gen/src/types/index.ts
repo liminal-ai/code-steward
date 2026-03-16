@@ -1,4 +1,5 @@
 export * from "./analysis.js";
+export * from "./cli.js";
 export * from "./common.js";
 export * from "./configuration.js";
 export * from "./environment.js";
@@ -6,6 +7,7 @@ export * from "./generation.js";
 export * from "./metadata.js";
 export * from "./orchestration.js";
 export * from "./planning.js";
+export * from "./publish.js";
 export * from "./quality-review.js";
 export * from "./update.js";
 export * from "./validation.js";
