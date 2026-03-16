@@ -158,6 +158,20 @@ export const stageFiles = async (
   );
 };
 
+export const stageAllChanges = async (
+  workDir: string,
+  directory: string,
+): Promise<import("../types/index.js").EngineResult<void>> => {
+  return runGitResult(
+    ["-C", workDir, "add", "-A", "--", directory],
+    "Failed to stage documentation changes",
+    {
+      directory,
+      workDir,
+    },
+  );
+};
+
 export const commit = async (
   workDir: string,
   message: string,

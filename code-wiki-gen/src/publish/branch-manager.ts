@@ -28,7 +28,7 @@ export const createDocsBranch = async (
     | "createWorktree"
     | "pushBranch"
     | "removeWorktree"
-    | "stageFiles"
+    | "stageAllChanges"
   >,
 ): Promise<EngineResult<BranchResult>> => {
   const worktreePath = path.join(
@@ -94,9 +94,9 @@ export const createDocsBranch = async (
       );
     }
 
-    const stageResult = await gitAdapter.stageFiles(
+    const stageResult = await gitAdapter.stageAllChanges(
       worktreePath,
-      options.filesForCommit,
+      relativeOutputPath,
     );
 
     if (!stageResult.ok) {

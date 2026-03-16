@@ -12,7 +12,6 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import type { EnvironmentCheckResult } from "../../src/types/index.js";
 import { runCli, runCliJson } from "../helpers/cli-runner.js";
 import { DOCS_OUTPUT, REPOS } from "../helpers/fixtures.js";
 import { runGit } from "../helpers/git.js";
@@ -47,37 +46,26 @@ describe("CLI failure handling", () => {
     ]);
 
     expect(result.exitCode).toBe(1);
-    expect(result.stdout).toContain("Environment: FAIL");
-    expect(result.stdout).toContain("invalid-path");
-    expect(result.stdout).toContain("./nonexistent-story-6-check");
+    expect(result.stderr).toContain("ENVIRONMENT_ERROR");
+    expect(result.stderr).toContain("./nonexistent-story-6-check");
   });
 
   it("TC-6.2b: missing dependency error includes guidance (CLI)", async () => {
     const gitOnlyPathDir = createGitOnlyPathDir();
 
     try {
-      const { envelope, exitCode } = await runCliJson<EnvironmentCheckResult>(
-        ["check", "--json"],
-        {
-          env: {
-            PATH: gitOnlyPathDir,
-          },
+      const { envelope, exitCode } = await runCliJson(["check", "--json"], {
+        env: {
+          PATH: gitOnlyPathDir,
         },
-      );
+      });
 
       expect(exitCode).toBe(1);
-      expect(envelope.success).toBe(true);
-      expect(envelope.result?.passed).toBe(false);
-      expect(envelope.result?.findings).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            category: "missing-dependency",
-            dependencyName: "python",
-            message: expect.stringContaining("Install Python 3.11+"),
-            severity: "error",
-          }),
-        ]),
-      );
+      expect(envelope.success).toBe(false);
+      expect(envelope.error).toMatchObject({
+        code: "DEPENDENCY_MISSING",
+        message: expect.stringContaining("Install Python 3.11+"),
+      });
     } finally {
       cleanupTempDir(path.dirname(gitOnlyPathDir));
     }

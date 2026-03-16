@@ -137,7 +137,7 @@ describe("CLI output and exit codes", () => {
     expect(result.exitCode).toBe(1);
   });
 
-  it("TC-2.5a: structured error rendered in human mode", async () => {
+  it("non-TC: publish error rendered in human mode", async () => {
     const fixture = createStatusRepo();
 
     try {
@@ -157,7 +157,7 @@ describe("CLI output and exit codes", () => {
     }
   });
 
-  it("TC-2.5b: structured error in JSON mode", async () => {
+  it("non-TC: publish error in JSON mode", async () => {
     const fixture = createStatusRepo();
 
     try {

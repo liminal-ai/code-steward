@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { generatedDocumentationMetadataSchema } from "../contracts/metadata.js";
 import { err, ok } from "../types/common.js";
 import type { EngineResult, PublishRequest } from "../types/index.js";
 import type { GitAdapterForPublish } from "./adapters.js";
@@ -48,7 +49,22 @@ export const runPreflight = async (
 
   try {
     const metadataContents = await readFile(metadataPath, "utf8");
-    JSON.parse(metadataContents);
+    const parsed = JSON.parse(metadataContents) as unknown;
+    const validation = generatedDocumentationMetadataSchema.safeParse(parsed);
+
+    if (!validation.success) {
+      return err(
+        "PUBLISH_ERROR",
+        "Documentation metadata is missing or invalid",
+        {
+          metadataPath,
+          outputPath: outputDirectory,
+          reason: validation.error.issues
+            .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+            .join("; "),
+        },
+      );
+    }
   } catch (error) {
     return err(
       "PUBLISH_ERROR",

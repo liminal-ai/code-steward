@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { analyzeRepository, getDocumentationStatus } from "../../src/index.js";
 import type {
+  DocumentationRunResult,
   DocumentationStatus,
   EnvironmentCheckResult,
 } from "../../src/types/index.js";
@@ -319,7 +320,31 @@ describe("CLI command shell", () => {
   it.skipIf(!INFERENCE_TESTS_ENABLED)(
     "TC-1.4a: CLI generate result matches SDK",
     async () => {
-      expect(true).toBe(true);
+      const fixture = createStatusRepo();
+
+      try {
+        const { envelope } = await runCliJson<DocumentationRunResult>([
+          "generate",
+          "--json",
+          "--repo-path",
+          fixture.repoPath,
+          "--output-path",
+          "docs/wiki",
+        ]);
+
+        expect(envelope.success).toBe(true);
+        expect(envelope.result).toMatchObject({
+          runId: expect.any(String),
+          success: true,
+          mode: expect.stringMatching(/^(full|update)$/),
+          durationSeconds: expect.any(Number),
+          generatedFiles: expect.any(Array),
+          commitHash: expect.any(String),
+          warnings: expect.any(Array),
+        });
+      } finally {
+        fixture.cleanup();
+      }
     },
   );
 

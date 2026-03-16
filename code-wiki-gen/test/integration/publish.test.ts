@@ -130,9 +130,9 @@ describe("publish flow", () => {
         "docs/full-publish",
         "main",
       );
-      expect(git.stageFiles).toHaveBeenCalledWith(
+      expect(git.stageAllChanges).toHaveBeenCalledWith(
         worktreePath,
-        EXPECTED_DOC_FILES,
+        "docs/wiki",
       );
       expect(git.commit).toHaveBeenCalledWith(
         worktreePath,
@@ -150,9 +150,9 @@ describe("publish flow", () => {
         getCallOrder(git.createBranch),
       );
       expect(getCallOrder(git.createBranch)).toBeLessThan(
-        getCallOrder(git.stageFiles),
+        getCallOrder(git.stageAllChanges),
       );
-      expect(getCallOrder(git.stageFiles)).toBeLessThan(
+      expect(getCallOrder(git.stageAllChanges)).toBeLessThan(
         getCallOrder(git.commit),
       );
       expect(getCallOrder(git.commit)).toBeLessThan(

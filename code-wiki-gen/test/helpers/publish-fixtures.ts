@@ -12,6 +12,7 @@ export interface MockGitForPublish {
   removeWorktree: ReturnType<typeof vi.fn>;
   createBranch: ReturnType<typeof vi.fn>;
   stageFiles: ReturnType<typeof vi.fn>;
+  stageAllChanges: ReturnType<typeof vi.fn>;
   commit: ReturnType<typeof vi.fn>;
   pushBranch: ReturnType<typeof vi.fn>;
   getRemoteUrl: ReturnType<typeof vi.fn>;
@@ -27,6 +28,7 @@ export function createMockGitForPublish(
     removeWorktree: vi.fn().mockResolvedValue(undefined),
     createBranch: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
     stageFiles: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
+    stageAllChanges: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
     commit: vi.fn().mockResolvedValue({ ok: true, value: "abc123def456" }),
     pushBranch: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
     getRemoteUrl: vi.fn().mockResolvedValue({

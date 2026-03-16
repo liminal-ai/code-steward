@@ -41,6 +41,35 @@ export default defineCommand({
       return;
     }
 
+    if (!result.value.passed) {
+      const firstError = result.value.findings.find(
+        (finding) => finding.severity === "error",
+      );
+
+      if (firstError) {
+        const errorCode =
+          firstError.category === "missing-dependency"
+            ? "DEPENDENCY_MISSING"
+            : "ENVIRONMENT_ERROR";
+        const error = {
+          code: errorCode,
+          message: firstError.message,
+          details: firstError.dependencyName
+            ? { dependency: firstError.dependencyName }
+            : undefined,
+        };
+
+        if (args.json) {
+          writeJsonError("check", error);
+        } else {
+          writeHumanError(error);
+        }
+
+        process.exitCode = EXIT_OPERATIONAL_FAILURE;
+        return;
+      }
+    }
+
     if (args.json) {
       writeJsonResult("check", result.value);
     } else {

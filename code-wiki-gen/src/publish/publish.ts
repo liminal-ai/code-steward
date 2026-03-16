@@ -2,6 +2,7 @@ import path from "node:path";
 
 import * as ghAdapter from "../adapters/gh.js";
 import * as gitAdapter from "../adapters/git.js";
+import { err } from "../types/common.js";
 import type {
   EngineResult,
   PublishRequest,
@@ -15,6 +16,27 @@ import { runPreflight } from "./preflight.js";
 export type { GhAdapterForPublish, GitAdapterForPublish } from "./adapters.js";
 
 export const publishDocumentation = async (
+  request: PublishRequest,
+  adapters?: {
+    git: GitAdapterForPublish;
+    gh: GhAdapterForPublish;
+  },
+): Promise<EngineResult<PublishResult>> => {
+  try {
+    return await publishDocumentationInternal(request, adapters);
+  } catch (error) {
+    return err(
+      "PUBLISH_ERROR",
+      error instanceof Error ? error.message : "Unexpected publish failure",
+      {
+        repoPath: request.repoPath,
+        reason: error instanceof Error ? error.stack : String(error),
+      },
+    );
+  }
+};
+
+const publishDocumentationInternal = async (
   request: PublishRequest,
   adapters?: {
     git: GitAdapterForPublish;
@@ -61,7 +83,9 @@ export const publishDocumentation = async (
     return branchResult;
   }
 
-  if (request.createPullRequest === false) {
+  const shouldCreatePR = request.createPullRequest ?? true;
+
+  if (!shouldCreatePR) {
     return {
       ok: true,
       value: {

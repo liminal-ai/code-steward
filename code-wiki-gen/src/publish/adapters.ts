@@ -12,6 +12,10 @@ export interface GitAdapterForPublish {
     baseRef?: string,
   ) => Promise<EngineResult<void>>;
   stageFiles: (workDir: string, paths: string[]) => Promise<EngineResult<void>>;
+  stageAllChanges: (
+    workDir: string,
+    directory: string,
+  ) => Promise<EngineResult<void>>;
   commit: (workDir: string, message: string) => Promise<EngineResult<string>>;
   pushBranch: (
     workDir: string,
