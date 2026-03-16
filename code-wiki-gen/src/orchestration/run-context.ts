@@ -21,8 +21,8 @@ export class RunContext {
 
   constructor(
     mode: "full" | "update",
-    sdkAdapter: AgentSDKAdapter,
     onProgress?: ProgressCallback,
+    sdkAdapter: AgentSDKAdapter = createNoopSDKAdapter(),
   ) {
     this.runId = randomUUID();
     this.startTime = Date.now();
@@ -55,6 +55,10 @@ export class RunContext {
     return this.sdkAdapter;
   }
 
+  setSDK(sdkAdapter: AgentSDKAdapter): void {
+    this.sdkAdapter = sdkAdapter;
+  }
+
   getDurationSeconds(): number {
     return (Date.now() - this.startTime) / 1000;
   }
@@ -82,8 +86,11 @@ export class RunContext {
   assembleFailureResult(
     stage: DocumentationStage,
     error: EngineError,
+    extra?: Partial<DocumentationRunFailure>,
   ): DocumentationRunFailure {
     return {
+      ...extra,
+      costUsd: this.sdkAdapter.computeCost(),
       success: false,
       mode: this.mode,
       runId: this.runId,
@@ -91,7 +98,18 @@ export class RunContext {
       warnings: this.getWarnings(),
       failedStage: stage,
       error,
-      costUsd: this.sdkAdapter.computeCost(),
     };
   }
 }
+
+const createNoopSDKAdapter = (): AgentSDKAdapter => ({
+  computeCost: () => null,
+  getAccumulatedUsage: () => ({ inputTokens: 0, outputTokens: 0 }),
+  query: async () => ({
+    ok: false,
+    error: {
+      code: "ORCHESTRATION_ERROR",
+      message: "Agent SDK adapter is not configured",
+    },
+  }),
+});

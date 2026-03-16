@@ -103,13 +103,34 @@ describe("prompt builders", () => {
       name: "core",
     };
     const modulePlan: ModulePlan = {
-      modules: [module],
+      modules: [
+        module,
+        {
+          components: ["src/api/client.ts"],
+          description: "API boundary",
+          name: "api",
+        },
+      ],
       unmappedComponents: [],
     };
-    const analysis = buildAnalysis(["src/index.ts"], []);
+    const analysis = buildAnalysis(
+      ["src/index.ts", "src/api/client.ts"],
+      [
+        {
+          source: "src/index.ts",
+          target: "src/api/client.ts",
+          type: "import",
+        },
+      ],
+    );
 
-    expect(() => buildModuleDocPrompt(module, modulePlan, analysis)).toThrow(
-      "not implemented",
+    const value = buildModuleDocPrompt(module, modulePlan, analysis);
+
+    expect(value.userMessage).toContain("Module name: core");
+    expect(value.userMessage).toContain("src/index.ts");
+    expect(value.userMessage).toContain("Depends on modules: api");
+    expect(value.userMessage).toContain(
+      "src/index.ts -> src/api/client.ts (import)",
     );
   });
 
@@ -121,15 +142,54 @@ describe("prompt builders", () => {
           description: "Core runtime",
           name: "core",
         },
+        {
+          components: ["src/api/client.ts"],
+          description: "API boundary",
+          name: "api",
+        },
       ],
       unmappedComponents: [],
     };
-    const generatedModules: GeneratedModuleSet = new Map();
-    const analysis = buildAnalysis(["src/index.ts"], []);
+    const generatedModules: GeneratedModuleSet = new Map([
+      [
+        "core",
+        {
+          content: "# Core\n\nCoordinates the runtime.\n",
+          description: "Core runtime",
+          fileName: "core.md",
+          filePath: "/tmp/core.md",
+          moduleName: "core",
+        },
+      ],
+      [
+        "api",
+        {
+          content: "# API\n\nWraps external integrations.\n",
+          description: "API boundary",
+          fileName: "api.md",
+          filePath: "/tmp/api.md",
+          moduleName: "api",
+        },
+      ],
+    ]);
+    const analysis = buildAnalysis(
+      ["src/index.ts", "src/api/client.ts"],
+      [
+        {
+          source: "src/index.ts",
+          target: "src/api/client.ts",
+          type: "usage",
+        },
+      ],
+    );
 
-    expect(() =>
-      buildOverviewPrompt(modulePlan, generatedModules, analysis),
-    ).toThrow("not implemented");
+    const value = buildOverviewPrompt(modulePlan, generatedModules, analysis);
+
+    expect(value.userMessage).toContain("- core");
+    expect(value.userMessage).toContain("description: Core runtime");
+    expect(value.userMessage).toContain("- api");
+    expect(value.userMessage).toContain("description: API boundary");
+    expect(value.userMessage).toContain("page: core.md");
   });
 
   it("quality-review prompt includes fix scope constraints", () => {

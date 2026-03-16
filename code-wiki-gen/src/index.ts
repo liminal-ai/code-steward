@@ -5,6 +5,7 @@ export { checkEnvironment } from "./environment/check.js";
 export { readMetadata } from "./metadata/reader.js";
 export { getDocumentationStatus } from "./metadata/status.js";
 export { writeMetadata } from "./metadata/writer.js";
+export { generateDocumentation } from "./orchestration/generate.js";
 export { validateDocumentation } from "./validation/validate.js";
 export * from "./types/index.js";
 export type {

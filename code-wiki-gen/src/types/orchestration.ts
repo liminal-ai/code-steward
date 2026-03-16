@@ -7,12 +7,14 @@ import type { ValidationResult } from "./validation.js";
 export type ProgressCallback = (event: DocumentationProgressEvent) => void;
 
 export type DocumentationStage =
+  | "resolving-configuration"
   | "checking-environment"
   | "analyzing-structure"
   | "computing-changes"
   | "planning-modules"
   | "generating-module"
   | "generating-overview"
+  | "writing-module-tree"
   | "validating-output"
   | "quality-review"
   | "writing-metadata"
@@ -90,11 +92,13 @@ export interface ValidationAndReviewResult {
 
 export interface RunSuccessData {
   outputPath: string;
+  metadataOutputPath: string;
   generatedFiles: string[];
   modulePlan: ModulePlan;
   validationResult: ValidationResult;
   qualityReviewPasses: number;
   commitHash: string;
+  mode: "full" | "update";
   updatedModules?: string[];
   unchangedModules?: string[];
   overviewRegenerated?: boolean;
