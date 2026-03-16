@@ -25,13 +25,16 @@ export function writeJsonError(
     message: string;
     details?: unknown;
   },
+  context?: Record<string, unknown>,
 ): void {
+  const details = mergeErrorDetails(error.details, context);
+
   writeStdout(
     JSON.stringify({
       command,
       error: {
         code: error.code,
-        details: normalizeForJson(error.details),
+        details: normalizeForJson(details),
         message: error.message,
       },
       success: false,
@@ -211,3 +214,28 @@ const normalizeForJson = (value: unknown): unknown => {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
+
+const mergeErrorDetails = (
+  details: unknown,
+  context?: Record<string, unknown>,
+): unknown => {
+  if (!context) {
+    return details;
+  }
+
+  if (details === undefined) {
+    return context;
+  }
+
+  if (isRecord(details)) {
+    return {
+      ...details,
+      ...context,
+    };
+  }
+
+  return {
+    context,
+    originalDetails: details,
+  };
+};

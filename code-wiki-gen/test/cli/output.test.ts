@@ -151,7 +151,7 @@ describe("CLI output and exit codes", () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("PUBLISH_ERROR");
-      expect(result.stderr).toContain("Story 4");
+      expect(result.stderr).toContain("origin");
     } finally {
       fixture.cleanup();
     }
@@ -175,11 +175,9 @@ describe("CLI output and exit codes", () => {
       expect(envelope.error).toMatchObject({
         code: "PUBLISH_ERROR",
         details: {
-          request: {
-            branchName: "docs/test",
-          },
+          repoPath: fixture.repoPath,
         },
-        message: expect.stringContaining("Story 4"),
+        message: expect.stringContaining("origin"),
       });
     } finally {
       fixture.cleanup();

@@ -10,8 +10,10 @@ import { err } from "../types/common.js";
 import { moduleNameToFileName } from "../types/generation.js";
 import type {
   ChangedFile,
+  DocumentationRunFailure,
   DocumentationRunRequest,
   DocumentationRunResult,
+  DocumentationStage,
   GeneratedModuleSet,
   ModulePlan,
   PlannedModule,
@@ -58,16 +60,6 @@ export const generateDocumentation = async (
     );
   }
 
-  try {
-    context.setSDK(createAgentSDKAdapter());
-  } catch (error) {
-    return context.assembleFailureResult("planning-modules", {
-      code: "ORCHESTRATION_ERROR",
-      message: "Unable to initialize Agent SDK adapter",
-      details: error instanceof Error ? { cause: error.message } : error,
-    });
-  }
-
   const config = resolvedRequest.value;
   const outputPath = resolveOutputPath(config);
   context.emitProgress("checking-environment");
@@ -110,6 +102,15 @@ const runFullGeneration = async (
 
   const analysis = analysisResult.value;
   context.emitProgress("planning-modules");
+  const sdkInitializationFailure = ensureSdkInitialized(
+    context,
+    "planning-modules",
+  );
+
+  if (sdkInitializationFailure) {
+    return sdkInitializationFailure;
+  }
+
   const planResult = await planModules(analysis, context.getSDK());
 
   if (!planResult.ok) {
@@ -299,6 +300,20 @@ const runUpdateGeneration = async (
     updatedPlan,
     affectedModules.modulesToRegenerate,
   );
+  const sdkInitializationFailure = ensureSdkInitialized(
+    context,
+    "generating-module",
+    {
+      commitHash: analysis.commitHash,
+      modulePlan: updatedPlan,
+      outputPath,
+    },
+  );
+
+  if (sdkInitializationFailure) {
+    return sdkInitializationFailure;
+  }
+
   const moduleDocsResult = await generateModuleDocs(
     updatedPlan,
     analysis,
@@ -649,3 +664,24 @@ const collectValidationWarnings = (
   validationResult.findings
     .filter((finding) => finding.severity === "warning")
     .map((finding) => finding.message);
+
+const ensureSdkInitialized = (
+  context: RunContext,
+  stage: DocumentationStage,
+  extra?: Partial<DocumentationRunFailure>,
+): DocumentationRunFailure | null => {
+  try {
+    context.setSDK(createAgentSDKAdapter());
+    return null;
+  } catch (error) {
+    return context.assembleFailureResult(
+      stage,
+      {
+        code: "ORCHESTRATION_ERROR",
+        message: "Unable to initialize Agent SDK adapter",
+        details: error instanceof Error ? { cause: error.message } : error,
+      },
+      extra,
+    );
+  }
+};

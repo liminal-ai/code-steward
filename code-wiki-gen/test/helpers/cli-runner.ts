@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CliResultEnvelope } from "../../src/types/cli.js";
@@ -28,6 +29,12 @@ export async function runCli(
   args: string[],
   options: CliRunOptions = {},
 ): Promise<CliRunResult> {
+  if (!existsSync(CLI_PATH)) {
+    throw new Error(
+      `CLI binary not built: expected ${CLI_PATH}. Run npm run build before CLI subprocess tests.`,
+    );
+  }
+
   return new Promise((resolve) => {
     const child = execFile(
       "node",

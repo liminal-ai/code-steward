@@ -16,7 +16,8 @@ export const checkRuntimeDependencies = async (): Promise<
     findings.push({
       category: "missing-dependency",
       dependencyName: "python",
-      message: "Python 3.11+ is required for the bundled analysis adapter.",
+      message:
+        "Python 3.11+ is required for structural analysis. Install Python 3.11+ and ensure it is available on PATH.",
       severity: "error",
     });
   }

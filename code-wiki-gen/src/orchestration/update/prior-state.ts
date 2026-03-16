@@ -50,7 +50,7 @@ const readPersistedModulePlan = async (
   } catch (error) {
     return err(
       "METADATA_ERROR",
-      `Update mode requires a persisted module plan at ${modulePlanPath}`,
+      `Update mode requires a persisted module plan at ${modulePlanPath}. Run full generation to create a new module plan.`,
       {
         path: modulePlanPath,
         reason: getErrorMessage(error),

@@ -121,12 +121,9 @@ describe("CLI command shell", () => {
       expect(envelope.error).toMatchObject({
         code: "PUBLISH_ERROR",
         details: {
-          request: {
-            branchName: "docs/test-branch",
-            createPullRequest: true,
-            repoPath: fixture.repoPath,
-          },
+          repoPath: fixture.repoPath,
         },
+        message: expect.stringContaining("origin"),
       });
     } finally {
       fixture.cleanup();

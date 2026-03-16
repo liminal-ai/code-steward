@@ -46,7 +46,7 @@ export const runAnalysis = async (
   if (!pythonCommand) {
     throw new AnalysisAdapterError(
       "DEPENDENCY_MISSING",
-      "Python 3.11+ is required for repository analysis.",
+      "Python 3.11+ is required for structural analysis. Install Python 3.11+ and ensure it is available on PATH.",
     );
   }
 
@@ -81,7 +81,7 @@ export const runAnalysis = async (
     if (isNodeError(error) && error.code === "ENOENT") {
       throw new AnalysisAdapterError(
         "DEPENDENCY_MISSING",
-        "Python 3.11+ is required for repository analysis.",
+        "Python 3.11+ is required for structural analysis. Install Python 3.11+ and ensure it is available on PATH.",
         { cause: error.message },
       );
     }

@@ -87,7 +87,9 @@ export default defineCommand({
       if (result.success) {
         writeJsonResult("update", result);
       } else {
-        writeJsonError("update", result.error);
+        writeJsonError("update", result.error, {
+          failedStage: result.failedStage,
+        });
       }
     } else {
       writeHumanRunResult(result);
