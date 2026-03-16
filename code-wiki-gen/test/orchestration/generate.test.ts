@@ -333,6 +333,9 @@ describe("generateDocumentation", () => {
     expect(analysisSpy).not.toHaveBeenCalled();
   });
 
+  // Exercises a defensive code path: in production, the planner rejects empty
+  // modules before the generator sees them. This test validates the fallback
+  // placeholder page for zero-component modules.
   it("TC-1.4c: empty module handled", async () => {
     const repoPath = createRepo();
     const analysis = buildAnalysis(CLUSTERING_PLAN, { repoPath });
@@ -568,7 +571,17 @@ describe("generateDocumentation", () => {
     );
   });
 
-  it("TC-1.8a: validation runs post-generation and direct validation failures fail the run", async () => {
+  it("TC-1.8a: successful result includes validationResult", async () => {
+    const result = await runHappyPath();
+
+    expect(result.validationResult).toBeDefined();
+    expect(result.validationResult.status).toBe("pass");
+    expect(result.validationResult).toHaveProperty("errorCount");
+    expect(result.validationResult).toHaveProperty("warningCount");
+    expect(result.validationResult).toHaveProperty("findings");
+  });
+
+  it("TC-1.8b: validation failures fail the run", async () => {
     const repoPath = createRepo();
     setupPipelineMocks(repoPath, {
       sdkConfig: {

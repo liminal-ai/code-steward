@@ -241,6 +241,9 @@ const getNewlyIntroducedPath = (
   return priorKnownComponents.has(changedFile.path) ? null : changedFile.path;
 };
 
+// Known limitation: only propagates impact from source → target relationships.
+// If file B imports file A, a change to A won't mark B's module as affected
+// unless A is the relationship source. Full bidirectional propagation is deferred.
 const getRelationshipImpacts = (
   changedFile: ChangedFile,
   currentModuleAssignments: Map<string, string>,

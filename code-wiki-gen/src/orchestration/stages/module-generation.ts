@@ -59,8 +59,6 @@ export const generateModuleDocs = async (
   const generatedModules: GeneratedModuleSet = new Map();
 
   for (const [index, module] of modules.entries()) {
-    onModuleProgress?.(module.name, index + 1, modules.length);
-
     const fileName = fileNamesResult.value.get(module.name);
 
     if (!fileName) {
@@ -92,6 +90,8 @@ export const generateModuleDocs = async (
         moduleName: module.name,
       });
     }
+
+    onModuleProgress?.(module.name, index + 1, modules.length);
 
     generatedModules.set(module.name, {
       content: contentResult.value,
@@ -179,14 +179,28 @@ const createPlaceholderModulePage = (module: PlannedModule): string =>
     "No repository components were assigned to this module during planning.",
   ].join("\n");
 
+const RESERVED_OUTPUT_FILES = new Set([
+  "overview.md",
+  "module-tree.json",
+  ".doc-meta.json",
+  ".module-plan.json",
+]);
+
 const getModuleFileNames = (
   modules: PlannedModule[],
 ): EngineResult<Map<string, string>> => {
   const derivedNames = new Map<string, string>();
   const collisions = new Map<string, string[]>();
+  const reservedCollisions: { fileName: string; moduleName: string }[] = [];
 
   for (const module of modules) {
     const fileName = moduleNameToFileName(module.name);
+
+    if (RESERVED_OUTPUT_FILES.has(fileName)) {
+      reservedCollisions.push({ fileName, moduleName: module.name });
+      continue;
+    }
+
     const existingModule = [...derivedNames.entries()].find(
       ([, existingFileName]) => existingFileName === fileName,
     )?.[0];
@@ -199,6 +213,18 @@ const getModuleFileNames = (
     }
 
     derivedNames.set(module.name, fileName);
+  }
+
+  if (reservedCollisions.length > 0) {
+    return err(
+      "ORCHESTRATION_ERROR",
+      "Module name collides with reserved output filename",
+      {
+        reservedCollisions: reservedCollisions.sort((left, right) =>
+          left.fileName.localeCompare(right.fileName),
+        ),
+      },
+    );
   }
 
   if (collisions.size > 0) {

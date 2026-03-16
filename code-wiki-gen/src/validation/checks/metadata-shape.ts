@@ -7,7 +7,12 @@ import { pathExists } from "./shared.js";
 
 export const checkMetadataShape = async (
   outputPath: string,
+  requirePersistedArtifacts = true,
 ): Promise<ValidationFinding[]> => {
+  if (!requirePersistedArtifacts) {
+    return [];
+  }
+
   const metadataPath = getMetadataFilePath(outputPath);
 
   if (!(await pathExists(metadataPath))) {

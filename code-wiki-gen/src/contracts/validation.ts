@@ -3,6 +3,7 @@ import type { ModuleTree, ModuleTreeEntry } from "../types/index.js";
 
 export const validationRequestSchema = z.object({
   outputPath: z.string(),
+  requirePersistedArtifacts: z.boolean().optional().default(true),
 });
 
 export const validationFindingSchema = z.object({

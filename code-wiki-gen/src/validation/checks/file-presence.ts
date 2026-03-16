@@ -13,10 +13,18 @@ const REQUIRED_FILES = [
 
 export const checkFilePresence = async (
   outputPath: string,
+  requirePersistedArtifacts = true,
 ): Promise<ValidationFinding[]> => {
   const findings: ValidationFinding[] = [];
+  const requiredFiles = requirePersistedArtifacts
+    ? REQUIRED_FILES
+    : REQUIRED_FILES.filter(
+        (requiredFile) =>
+          requiredFile !== METADATA_FILE_NAME &&
+          requiredFile !== ".module-plan.json",
+      );
 
-  for (const requiredFile of REQUIRED_FILES) {
+  for (const requiredFile of requiredFiles) {
     const filePath = path.join(outputPath, requiredFile);
 
     if (await pathExists(filePath)) {

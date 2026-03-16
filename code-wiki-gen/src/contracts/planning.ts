@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const CLUSTERING_THRESHOLD = 8;
-export const LARGE_REPO_MODULE_THRESHOLD = 15;
 
 export const modulePlanSchema = z.object({
   modules: z.array(

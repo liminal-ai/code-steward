@@ -218,6 +218,7 @@ const runUpdateGeneration = async (
   context: RunContext,
   outputPath: string,
 ): Promise<DocumentationRunResult> => {
+  context.emitProgress("computing-changes");
   const priorStateResult = await readPriorGenerationState(outputPath);
 
   if (!priorStateResult.ok) {
@@ -230,7 +231,6 @@ const runUpdateGeneration = async (
     );
   }
 
-  context.emitProgress("computing-changes");
   let currentCommitHash: string;
   let changedFiles: ChangedFile[];
 
@@ -459,14 +459,11 @@ const finalizeRun = async (
       options.outputPath,
       config.qualityReview,
       context.getSDK(),
+      () => context.emitProgress("quality-review"),
     );
   } catch (error) {
     const validationError =
       error instanceof ValidationAndReviewError ? error : null;
-
-    if (validationError?.stage === "quality-review") {
-      context.emitProgress("quality-review");
-    }
 
     const engineError =
       validationError !== null
@@ -487,10 +484,6 @@ const finalizeRun = async (
         qualityReviewPasses: validationError?.qualityReviewPasses,
       },
     );
-  }
-
-  if (validationResult.qualityReviewPasses > 0) {
-    context.emitProgress("quality-review");
   }
 
   if (validationResult.hasBlockingErrors) {

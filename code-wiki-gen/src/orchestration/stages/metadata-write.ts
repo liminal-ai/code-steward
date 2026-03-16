@@ -41,10 +41,24 @@ const writeArtifacts = async (
 ): Promise<EngineResult<void>> => {
   const modulePlanPath = path.join(outputPath, MODULE_PLAN_FILE_NAME);
   const metadataPath = getMetadataFilePath(outputPath);
-  const [modulePlanSnapshot, metadataSnapshot] = await Promise.all([
-    captureFileSnapshot(modulePlanPath),
-    captureFileSnapshot(metadataPath),
-  ]);
+
+  let modulePlanSnapshot: FileSnapshot;
+  let metadataSnapshot: FileSnapshot;
+
+  try {
+    [modulePlanSnapshot, metadataSnapshot] = await Promise.all([
+      captureFileSnapshot(modulePlanPath),
+      captureFileSnapshot(metadataPath),
+    ]);
+  } catch (error) {
+    return err(
+      "METADATA_ERROR",
+      "Unable to capture file snapshot before writing metadata",
+      {
+        reason: error instanceof Error ? error.message : String(error),
+      },
+    );
+  }
 
   try {
     await writeFile(

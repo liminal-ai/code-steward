@@ -1,6 +1,0 @@
-[
-  {
-    "filePath": "overview.md",
-    "newContent": "# Repository Overview\n\n```mermaid\ngraph TD\n  Core --> API\n  API --> Utils\n```\n"
-  }
-]

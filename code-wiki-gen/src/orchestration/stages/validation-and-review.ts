@@ -25,6 +25,7 @@ export const validateAndReview = async (
   outputPath: string,
   config: QualityReviewConfig,
   sdk: AgentSDKAdapter,
+  onQualityReviewStart?: () => void,
 ): Promise<ValidationAndReviewResult> => {
   const resolvedConfig = {
     secondModelReview: config.secondModelReview ?? false,
@@ -38,6 +39,7 @@ export const validateAndReview = async (
   }
 
   if (resolvedConfig.selfReview) {
+    onQualityReviewStart?.();
     await runQualityReviewPass(
       outputPath,
       validationResult,
@@ -56,6 +58,7 @@ export const validateAndReview = async (
     resolvedConfig.secondModelReview &&
     validationResult.findings.length > 0
   ) {
+    onQualityReviewStart?.();
     await runQualityReviewPass(
       outputPath,
       validationResult,

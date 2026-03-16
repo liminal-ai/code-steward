@@ -1,5 +1,6 @@
 export interface ValidationRequest {
   outputPath: string;
+  requirePersistedArtifacts?: boolean;
 }
 
 export interface ValidationResult {
