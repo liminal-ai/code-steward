@@ -16,6 +16,7 @@ export class RunContext {
   readonly mode: "full" | "update";
 
   private warnings: string[] = [];
+  private generatedFiles = new Set<string>();
   private onProgress: ProgressCallback | undefined;
   private sdkAdapter: AgentSDKAdapter;
 
@@ -55,8 +56,18 @@ export class RunContext {
     this.warnings.push(message);
   }
 
+  recordGeneratedFile(fileName: string): void {
+    this.generatedFiles.add(fileName);
+  }
+
   getWarnings(): string[] {
     return [...this.warnings];
+  }
+
+  getGeneratedFiles(): string[] {
+    return [...this.generatedFiles].sort((left, right) =>
+      left.localeCompare(right),
+    );
   }
 
   getSDK(): AgentSDKAdapter {
@@ -96,8 +107,16 @@ export class RunContext {
     error: EngineError,
     extra?: Partial<DocumentationRunFailure>,
   ): DocumentationRunFailure {
+    const generatedFiles = mergeGeneratedFiles(
+      this.getGeneratedFiles(),
+      extra?.generatedFiles,
+    );
+
+    this.emitProgress("failed");
+
     return {
       ...extra,
+      ...(generatedFiles ? { generatedFiles } : {}),
       costUsd: this.sdkAdapter.computeCost(),
       success: false,
       mode: this.mode,
@@ -109,6 +128,19 @@ export class RunContext {
     };
   }
 }
+
+const mergeGeneratedFiles = (
+  recordedFiles: string[],
+  extraFiles?: string[],
+): string[] | undefined => {
+  const mergedFiles = new Set([...recordedFiles, ...(extraFiles ?? [])]);
+
+  if (mergedFiles.size === 0) {
+    return undefined;
+  }
+
+  return [...mergedFiles].sort((left, right) => left.localeCompare(right));
+};
 
 const createNoopSDKAdapter = (): AgentSDKAdapter => ({
   computeCost: () => null,

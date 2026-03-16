@@ -1,6 +1,7 @@
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { getMetadataFilePath } from "../../metadata/file.js";
 import { writeMetadata } from "../../metadata/writer.js";
 import { err } from "../../types/common.js";
 import type {
@@ -28,19 +29,6 @@ export const writeRunMetadata = async (
   );
 };
 
-export const writeValidationArtifacts = async (
-  data: {
-    commitHash: string;
-    generatedFiles: string[];
-    metadataOutputPath: string;
-    mode: "full" | "update";
-  },
-  plan: ModulePlan,
-  outputPath: string,
-): Promise<EngineResult<void>> => {
-  return writeArtifacts(data, plan, outputPath);
-};
-
 const writeArtifacts = async (
   data: {
     commitHash: string;
@@ -52,6 +40,11 @@ const writeArtifacts = async (
   outputPath: string,
 ): Promise<EngineResult<void>> => {
   const modulePlanPath = path.join(outputPath, MODULE_PLAN_FILE_NAME);
+  const metadataPath = getMetadataFilePath(outputPath);
+  const [modulePlanSnapshot, metadataSnapshot] = await Promise.all([
+    captureFileSnapshot(modulePlanPath),
+    captureFileSnapshot(metadataPath),
+  ]);
 
   try {
     await writeFile(
@@ -60,6 +53,7 @@ const writeArtifacts = async (
       "utf8",
     );
   } catch (error) {
+    await restoreFileSnapshot(modulePlanPath, modulePlanSnapshot);
     return err(
       "METADATA_ERROR",
       `Unable to write module plan at ${modulePlanPath}`,
@@ -86,17 +80,11 @@ const writeArtifacts = async (
     return metadataResult;
   }
 
-  await safeRemove(modulePlanPath);
-  return metadataResult;
-};
-
-export const cleanupPersistedRunFiles = async (
-  outputPath: string,
-): Promise<void> => {
   await Promise.all([
-    safeRemove(path.join(outputPath, ".doc-meta.json")),
-    safeRemove(path.join(outputPath, MODULE_PLAN_FILE_NAME)),
+    restoreFileSnapshot(modulePlanPath, modulePlanSnapshot),
+    restoreFileSnapshot(metadataPath, metadataSnapshot),
   ]);
+  return metadataResult;
 };
 
 const countPlannedComponents = (plan: ModulePlan): number =>
@@ -104,6 +92,42 @@ const countPlannedComponents = (plan: ModulePlan): number =>
     (total, module) => total + module.components.length,
     plan.unmappedComponents.length,
   );
+
+interface FileSnapshot {
+  exists: boolean;
+  contents?: string;
+}
+
+const captureFileSnapshot = async (filePath: string): Promise<FileSnapshot> => {
+  try {
+    return {
+      contents: await readFile(filePath, "utf8"),
+      exists: true,
+    };
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return { exists: false };
+    }
+
+    throw error;
+  }
+};
+
+const restoreFileSnapshot = async (
+  filePath: string,
+  snapshot: FileSnapshot,
+): Promise<void> => {
+  try {
+    if (snapshot.exists) {
+      await writeFile(filePath, snapshot.contents ?? "", "utf8");
+      return;
+    }
+
+    await safeRemove(filePath);
+  } catch {
+    // Best-effort restoration preserves the primary metadata error.
+  }
+};
 
 const safeRemove = async (filePath: string): Promise<void> => {
   try {

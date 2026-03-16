@@ -988,7 +988,10 @@ describe("generateDocumentation update mode", () => {
 
     expectSuccess(await runUpdate(repoPath));
 
-    expect(validationSpy).toHaveBeenCalledWith({ outputPath });
+    expect(validationSpy).toHaveBeenCalledWith({
+      outputPath,
+      requirePersistedArtifacts: false,
+    });
   });
 
   it("non-TC: >50% components affected triggers recommendation warning", async () => {

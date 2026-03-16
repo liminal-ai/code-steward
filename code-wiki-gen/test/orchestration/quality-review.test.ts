@@ -327,7 +327,10 @@ describe("validateAndReview", () => {
     const result = await validateAndReview(outputPath, {}, sdk);
 
     expect(validationSpy).toHaveBeenCalledTimes(1);
-    expect(validationSpy).toHaveBeenCalledWith({ outputPath });
+    expect(validationSpy).toHaveBeenCalledWith({
+      outputPath,
+      requirePersistedArtifacts: false,
+    });
     expect(result.validationResult.status).toBe("pass");
   });
 

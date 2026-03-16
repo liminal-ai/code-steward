@@ -36,6 +36,8 @@ export const validateDocumentation = async (
 
   try {
     const outputPath = parsedRequest.data.outputPath;
+    const requirePersistedArtifacts =
+      parsedRequest.data.requirePersistedArtifacts;
     const outputDirectory = await getOutputDirectory(outputPath);
 
     if (!outputDirectory.exists) {
@@ -66,9 +68,9 @@ export const validateDocumentation = async (
 
     const findings = (
       await Promise.all([
-        checkFilePresence(outputPath),
+        checkFilePresence(outputPath, requirePersistedArtifacts),
         checkCrossLinks(outputPath),
-        checkMetadataShape(outputPath),
+        checkMetadataShape(outputPath, requirePersistedArtifacts),
         checkModuleTree(outputPath),
         checkMermaid(outputPath),
       ])

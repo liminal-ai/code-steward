@@ -25,10 +25,8 @@ import { resolveOutputPath } from "./output-path.js";
 import { RunContext } from "./run-context.js";
 import { runEnvironmentCheck } from "./stages/environment-check.js";
 import {
-  cleanupPersistedRunFiles,
   MODULE_PLAN_FILE_NAME,
   writeRunMetadata,
-  writeValidationArtifacts,
 } from "./stages/metadata-write.js";
 import { generateModuleDocs } from "./stages/module-generation.js";
 import { planModules } from "./stages/module-planning.js";
@@ -144,6 +142,7 @@ const runFullGeneration = async (
     config,
     context.getSDK(),
     (moduleName, completed, total) => {
+      context.recordGeneratedFile(moduleNameToFileName(moduleName));
       context.emitProgress("generating-module", {
         completed,
         moduleName,
@@ -179,12 +178,13 @@ const runFullGeneration = async (
       overviewResult.error,
       {
         commitHash: analysis.commitHash,
-        generatedFiles: collectOutputFiles(getModuleNames(modulePlan)),
         modulePlan,
         outputPath,
       },
     );
   }
+
+  context.recordGeneratedFile(overviewResult.value);
 
   const treeResult = await writeModuleTree(modulePlan, outputPath);
 
@@ -194,12 +194,13 @@ const runFullGeneration = async (
       treeResult.error,
       {
         commitHash: analysis.commitHash,
-        generatedFiles: collectOutputFiles(getModuleNames(modulePlan)),
         modulePlan,
         outputPath,
       },
     );
   }
+
+  context.recordGeneratedFile("module-tree.json");
 
   return finalizeRun(config, context, {
     commitHash: analysis.commitHash,
@@ -207,9 +208,6 @@ const runFullGeneration = async (
       includeMetadata: true,
       includeModulePlan: true,
     }),
-    generatedFilesBeforeMetadata: collectOutputFiles(
-      getModuleNames(modulePlan),
-    ),
     modulePlan,
     outputPath,
   });
@@ -307,6 +305,7 @@ const runUpdateGeneration = async (
     config,
     context.getSDK(),
     (moduleName, completed, total) => {
+      context.recordGeneratedFile(moduleNameToFileName(moduleName));
       context.emitProgress("generating-module", {
         completed,
         moduleName,
@@ -340,7 +339,6 @@ const runUpdateGeneration = async (
       removedModulesResult.error,
       {
         commitHash: analysis.commitHash,
-        generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
         modulePlan: updatedPlan,
         outputPath,
       },
@@ -361,7 +359,6 @@ const runUpdateGeneration = async (
         overviewDocsResult.error,
         {
           commitHash: analysis.commitHash,
-          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
           modulePlan: updatedPlan,
           outputPath,
         },
@@ -381,12 +378,13 @@ const runUpdateGeneration = async (
         overviewResult.error,
         {
           commitHash: analysis.commitHash,
-          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
           modulePlan: updatedPlan,
           outputPath,
         },
       );
     }
+
+    context.recordGeneratedFile(overviewResult.value);
   }
 
   if (affectedModules.overviewNeedsRegeneration) {
@@ -398,12 +396,13 @@ const runUpdateGeneration = async (
         treeResult.error,
         {
           commitHash: analysis.commitHash,
-          generatedFiles: collectOutputFiles(getModuleNames(updatedPlan)),
           modulePlan: updatedPlan,
           outputPath,
         },
       );
     }
+
+    context.recordGeneratedFile("module-tree.json");
   }
 
   return finalizeRun(config, context, {
@@ -412,9 +411,6 @@ const runUpdateGeneration = async (
       includeMetadata: true,
       includeModulePlan: true,
     }),
-    generatedFilesBeforeMetadata: collectOutputFiles(
-      getModuleNames(updatedPlan),
-    ),
     modulePlan: updatedPlan,
     outputPath,
     overviewRegenerated: affectedModules.overviewNeedsRegeneration,
@@ -429,7 +425,6 @@ const finalizeRun = async (
   options: {
     commitHash: string;
     generatedFiles: string[];
-    generatedFilesBeforeMetadata: string[];
     modulePlan: ModulePlan;
     outputPath: string;
     updatedModules?: string[];
@@ -455,29 +450,6 @@ const finalizeRun = async (
       warningCount: 0,
     },
   };
-  const provisionalMetadataResult = await writeValidationArtifacts(
-    {
-      commitHash: provisionalRunData.commitHash,
-      generatedFiles: provisionalRunData.generatedFiles,
-      metadataOutputPath: provisionalRunData.metadataOutputPath,
-      mode: provisionalRunData.mode,
-    },
-    options.modulePlan,
-    options.outputPath,
-  );
-
-  if (!provisionalMetadataResult.ok) {
-    return context.assembleFailureResult(
-      "writing-metadata",
-      provisionalMetadataResult.error,
-      {
-        commitHash: options.commitHash,
-        generatedFiles: options.generatedFiles,
-        modulePlan: options.modulePlan,
-        outputPath: options.outputPath,
-      },
-    );
-  }
 
   let validationResult: ValidationAndReviewResult;
 
@@ -496,7 +468,6 @@ const finalizeRun = async (
       context.emitProgress("quality-review");
     }
 
-    await cleanupPersistedRunFiles(options.outputPath);
     const engineError =
       validationError !== null
         ? validationError.engineError
@@ -511,7 +482,6 @@ const finalizeRun = async (
       engineError,
       {
         commitHash: options.commitHash,
-        generatedFiles: options.generatedFiles,
         modulePlan: options.modulePlan,
         outputPath: options.outputPath,
         qualityReviewPasses: validationError?.qualityReviewPasses,
@@ -524,7 +494,6 @@ const finalizeRun = async (
   }
 
   if (validationResult.hasBlockingErrors) {
-    await cleanupPersistedRunFiles(options.outputPath);
     return context.assembleFailureResult(
       "validating-output",
       {
@@ -533,7 +502,6 @@ const finalizeRun = async (
       },
       {
         commitHash: options.commitHash,
-        generatedFiles: options.generatedFilesBeforeMetadata,
         modulePlan: options.modulePlan,
         outputPath: options.outputPath,
         qualityReviewPasses: validationResult.qualityReviewPasses,
@@ -559,13 +527,11 @@ const finalizeRun = async (
   );
 
   if (!finalMetadataResult.ok) {
-    await cleanupPersistedRunFiles(options.outputPath);
     return context.assembleFailureResult(
       "writing-metadata",
       finalMetadataResult.error,
       {
         commitHash: options.commitHash,
-        generatedFiles: options.generatedFilesBeforeMetadata,
         modulePlan: options.modulePlan,
         outputPath: options.outputPath,
         qualityReviewPasses: validationResult.qualityReviewPasses,

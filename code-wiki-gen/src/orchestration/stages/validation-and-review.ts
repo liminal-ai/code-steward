@@ -83,7 +83,10 @@ const createResult = (
 });
 
 const runValidation = async (outputPath: string): Promise<ValidationResult> => {
-  const validationResult = await validateDocumentation({ outputPath });
+  const validationResult = await validateDocumentation({
+    outputPath,
+    requirePersistedArtifacts: false,
+  });
 
   if (!validationResult.ok) {
     throw new ValidationAndReviewError(
