@@ -1,0 +1,16 @@
+{
+  "modules": [
+    {
+      "name": "documentation-engine",
+      "description": "Single-module documentation plan for a small repository with tightly coupled source files",
+      "components": [
+        "src/index.ts",
+        "src/config/resolver.ts",
+        "src/analysis/analyze.ts",
+        "src/metadata/writer.ts",
+        "src/validation/validate.ts"
+      ]
+    }
+  ],
+  "unmappedComponents": []
+}

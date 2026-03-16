@@ -17,6 +17,7 @@ export type EngineErrorCode =
   | "METADATA_ERROR"
   | "VALIDATION_ERROR"
   | "CONFIGURATION_ERROR"
+  | "ORCHESTRATION_ERROR"
   | "PATH_ERROR";
 
 export interface EngineError {
