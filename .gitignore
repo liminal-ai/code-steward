@@ -1,0 +1,5 @@
+# Reference repos (cloned for local use only)
+repo-ref/
+
+# OS files
+.DS_Store
