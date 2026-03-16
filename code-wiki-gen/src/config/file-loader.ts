@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { configurationFileSchema } from "../contracts/configuration.js";
+import { getErrorMessage } from "../errors.js";
 import { err, ok } from "../types/common.js";
 import type {
   ConfigurationErrorDetails,
@@ -79,6 +80,3 @@ export const loadConfigFile = async (
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown configuration file error";

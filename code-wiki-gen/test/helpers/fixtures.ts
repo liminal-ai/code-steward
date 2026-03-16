@@ -27,6 +27,10 @@ export const DOCS_OUTPUT = {
     FIXTURES_ROOT,
     "docs-output/missing-metadata-fields",
   ),
+  missingModulePlan: path.join(
+    FIXTURES_ROOT,
+    "docs-output/missing-module-plan",
+  ),
 };
 
 export const CONFIG = {

@@ -1,7 +1,7 @@
 import { runSubprocess } from "./subprocess.js";
 
 export const isPythonAvailable = async (): Promise<boolean> => {
-  const pythonCommand = await resolvePythonCommand();
+  const pythonCommand = await getPythonCommand();
   return pythonCommand !== null;
 };
 
@@ -14,7 +14,7 @@ export const isTreeSitterLanguageAvailable = async (
     return true;
   }
 
-  const pythonCommand = await resolvePythonCommand();
+  const pythonCommand = await getPythonCommand();
 
   if (!pythonCommand) {
     return false;
@@ -49,7 +49,7 @@ const TREE_SITTER_MODULES: Record<string, string> = {
   typescript: "tree_sitter_typescript",
 };
 
-const resolvePythonCommand = async (): Promise<string | null> => {
+export const getPythonCommand = async (): Promise<string | null> => {
   for (const command of PYTHON_COMMANDS) {
     try {
       const result = await runSubprocess(command, ["--version"], {

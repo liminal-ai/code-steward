@@ -28,8 +28,6 @@ export const checkParsers = async (
   return findings;
 };
 
-export const checkParserAvailability = checkParsers;
-
 const PARSER_REQUIREMENTS: Record<
   string,
   {

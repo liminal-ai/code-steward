@@ -32,10 +32,3 @@ export const err = <T>(
   message: string,
   details?: unknown,
 ): EngineResult<T> => ({ ok: false, error: { code, message, details } });
-
-export class NotImplementedError extends Error {
-  constructor(name: string) {
-    super(`${name} is not yet implemented`);
-    this.name = "NotImplementedError";
-  }
-}

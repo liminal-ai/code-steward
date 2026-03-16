@@ -33,6 +33,23 @@ export const checkCrossLinks = async (
         stripLinkSuffixes(rawTarget),
       );
 
+      const normalizedTarget = path.normalize(resolvedTargetPath);
+      const normalizedOutput = path.normalize(outputPath);
+
+      if (
+        !normalizedTarget.startsWith(`${normalizedOutput}${path.sep}`) &&
+        normalizedTarget !== normalizedOutput
+      ) {
+        findings.push({
+          category: "broken-link",
+          filePath,
+          message: `Broken internal link in ${filePath}: ${rawTarget}`,
+          severity: "error",
+          target: rawTarget,
+        });
+        continue;
+      }
+
       if (await pathExists(resolvedTargetPath)) {
         continue;
       }
@@ -50,6 +67,8 @@ export const checkCrossLinks = async (
   return findings;
 };
 
+// Only validates internal .md links — non-markdown targets (images, JSON, etc.)
+// are intentionally excluded as they are not part of the documentation graph.
 const shouldValidateLink = (target: string): boolean => {
   if (target.startsWith("#")) {
     return false;

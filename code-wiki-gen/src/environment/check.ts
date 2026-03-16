@@ -22,7 +22,7 @@ export const checkEnvironment = async (
       if (repositoryStatus === "invalid-path") {
         findings.push({
           category: "invalid-path",
-          message: `Path does not exist: ${request.repoPath}`,
+          message: `Path does not exist or is not a directory: ${request.repoPath}`,
           path: request.repoPath,
           severity: "error",
         });

@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { metadataWriteRequestSchema } from "../contracts/metadata.js";
+import { getErrorMessage } from "../errors.js";
 import { err, ok } from "../types/common.js";
 import type { EngineResult, MetadataWriteRequest } from "../types/index.js";
 import { getMetadataFilePath } from "./file.js";
@@ -44,6 +45,3 @@ export const writeMetadata = async (
 
   return ok(undefined);
 };
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown metadata write error";

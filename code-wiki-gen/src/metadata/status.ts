@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { getHeadCommitHash } from "../adapters/git.js";
 import { resolveConfiguration } from "../config/resolver.js";
+import { getErrorMessage } from "../errors.js";
 import { err, ok } from "../types/common.js";
 import type {
   DocumentationStatus,
@@ -39,10 +40,14 @@ export const getDocumentationStatus = async (
   try {
     currentHeadCommitHash = await getHeadCommitHash(request.repoPath);
   } catch (error) {
-    return err("PATH_ERROR", "Unable to resolve the current HEAD commit hash", {
-      repoPath: request.repoPath,
-      reason: getErrorMessage(error),
-    });
+    return err(
+      "ENVIRONMENT_ERROR",
+      "Unable to resolve the current HEAD commit hash",
+      {
+        repoPath: request.repoPath,
+        reason: getErrorMessage(error),
+      },
+    );
   }
 
   const { generatedAt, commitHash } = metadataResult.value;
@@ -110,6 +115,3 @@ const createStatus = (
   outputPath,
   state,
 });
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown git status error";

@@ -1,5 +1,14 @@
 import { spawn } from "node:child_process";
 
+export class SubprocessTimeoutError extends Error {
+  constructor(command: string, args: string[], timeoutMs: number) {
+    super(
+      `Subprocess timed out after ${timeoutMs}ms: ${command} ${args.join(" ")}`,
+    );
+    this.name = "SubprocessTimeoutError";
+  }
+}
+
 export interface SubprocessResult {
   stdout: string;
   stderr: string;
@@ -30,11 +39,7 @@ export const runSubprocess = async (
 
       finished = true;
       child.kill("SIGTERM");
-      reject(
-        new Error(
-          `Subprocess timed out after ${timeoutMs}ms: ${command} ${args.join(" ")}`,
-        ),
-      );
+      reject(new SubprocessTimeoutError(command, args, timeoutMs));
     }, timeoutMs);
 
     child.stdout.setEncoding("utf8");

@@ -76,22 +76,9 @@ describe("checkEnvironment", () => {
 
     const value = expectEnvironmentCheck(await checkEnvironment());
 
+    expect(value.passed).toBe(true);
     expect(value.detectedLanguages).toEqual([]);
     expect(value.findings).toEqual([]);
-    expect(value.findings).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ category: "invalid-path" }),
-        expect.objectContaining({ category: "invalid-repo" }),
-      ]),
-    );
-    expect(value.findings).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: "missing-dependency",
-          dependencyName: expect.stringContaining("tree-sitter"),
-        }),
-      ]),
-    );
   });
 
   it("TC-1.2a: missing Python identified by name", async () => {

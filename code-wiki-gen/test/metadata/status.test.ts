@@ -158,6 +158,9 @@ describe("metadata and status", () => {
     );
 
     expect(value.state).toBe("invalid");
+    expect(value.lastGeneratedAt).toBeNull();
+    expect(value.lastGeneratedCommitHash).toBeNull();
+    expect(value.currentHeadCommitHash).toBeNull();
   });
 
   it("TC-3.5a: write full generation metadata", async () => {

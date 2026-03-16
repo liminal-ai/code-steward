@@ -119,6 +119,21 @@ describe("validation", () => {
     });
   });
 
+  it("TC-4.2d: missing .module-plan.json reported", async () => {
+    const value = expectValidation(
+      await validateDocumentation({
+        outputPath: DOCS_OUTPUT.missingModulePlan,
+      }),
+    );
+
+    expect(value.findings).toContainEqual({
+      category: "missing-file",
+      filePath: path.join(DOCS_OUTPUT.missingModulePlan, ".module-plan.json"),
+      message: `Missing required file: ${path.join(DOCS_OUTPUT.missingModulePlan, ".module-plan.json")}`,
+      severity: "error",
+    });
+  });
+
   it("TC-4.3a: valid internal links produce no findings", async () => {
     const value = expectValidation(
       await validateDocumentation({ outputPath: DOCS_OUTPUT.valid }),
@@ -146,6 +161,7 @@ describe("validation", () => {
       await validateDocumentation({ outputPath: DOCS_OUTPUT.valid }),
     );
 
+    expect(value.status).toBe("pass");
     expect(findByCategory(value, "module-tree")).toEqual([]);
   });
 
@@ -290,7 +306,7 @@ describe("validation", () => {
       );
 
       expect(value.status).toBe("fail");
-      expect(value.errorCount).toBe(3);
+      expect(value.errorCount).toBe(4);
       expect(value.warningCount).toBe(0);
       expect(findByCategory(value, "missing-file")).toEqual([
         {
@@ -311,6 +327,12 @@ describe("validation", () => {
           message: `Missing required file: ${path.join(outputPath, ".doc-meta.json")}`,
           severity: "error",
         },
+        {
+          category: "missing-file",
+          filePath: path.join(outputPath, ".module-plan.json"),
+          message: `Missing required file: ${path.join(outputPath, ".module-plan.json")}`,
+          severity: "error",
+        },
       ]);
       expect(findByCategory(value, "broken-link")).toEqual([]);
       expect(findByCategory(value, "mermaid")).toEqual([]);
@@ -325,6 +347,7 @@ describe("validation", () => {
     try {
       await writeDocsOutput(outputPath, {
         ".doc-meta.json": JSON.stringify(buildMetadata(), null, 2),
+        ".module-plan.json": "{}",
         "module-a.md": "# Module A\n",
         "nested/module-b.md": "# Module B\n",
         "module-tree.json": JSON.stringify(
@@ -362,6 +385,7 @@ describe("validation", () => {
     try {
       await writeDocsOutput(outputPath, {
         ".doc-meta.json": JSON.stringify(buildMetadata(), null, 2),
+        ".module-plan.json": "{}",
         "module-a.md": "# Module A\n\n```mermaid\nA --> B\n```\n",
         "module-b.md": "# Module B\n",
         "module-tree.json": JSON.stringify(
@@ -396,6 +420,7 @@ describe("validation", () => {
     try {
       await writeDocsOutput(outputPath, {
         ".doc-meta.json": JSON.stringify(buildMetadata(), null, 2),
+        ".module-plan.json": "{}",
         "module-a.md":
           "# Module A\n\n- [Missing A](./missing-a.md)\n- [Missing B](./missing-b.md)\n",
         "module-b.md": "# Module B\n",

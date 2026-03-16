@@ -3,8 +3,12 @@ import { fileURLToPath } from "node:url";
 
 import { ZodError } from "zod";
 import { getPythonCommand } from "../adapters/python.js";
-import { runSubprocess } from "../adapters/subprocess.js";
+import {
+  runSubprocess,
+  SubprocessTimeoutError,
+} from "../adapters/subprocess.js";
 import { rawAnalysisOutputSchema } from "../contracts/analysis.js";
+import { getErrorMessage } from "../errors.js";
 import type { ResolvedConfiguration } from "../types/index.js";
 import type { RawAnalysisOutput } from "./raw-output.js";
 
@@ -82,7 +86,7 @@ export const runAnalysis = async (
       );
     }
 
-    if (isTimeoutError(error)) {
+    if (error instanceof SubprocessTimeoutError) {
       throw new AnalysisAdapterError(
         "ANALYSIS_ERROR",
         "Python analysis subprocess timed out.",
@@ -143,11 +147,5 @@ const parseRawAnalysisOutput = (stdout: string): RawAnalysisOutput => {
   }
 };
 
-const isTimeoutError = (error: unknown): boolean =>
-  error instanceof Error && error.message.includes("timed out");
-
 const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
   error instanceof Error && "code" in error;
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown analysis adapter error";

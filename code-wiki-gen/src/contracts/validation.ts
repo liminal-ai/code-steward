@@ -21,8 +21,8 @@ export const validationFindingSchema = z.object({
 
 export const validationResultSchema = z.object({
   status: z.enum(["pass", "warn", "fail"]),
-  errorCount: z.number(),
-  warningCount: z.number(),
+  errorCount: z.number().int().nonnegative(),
+  warningCount: z.number().int().nonnegative(),
   findings: z.array(validationFindingSchema),
 });
 

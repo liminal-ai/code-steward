@@ -1,4 +1,5 @@
 import path from "node:path";
+import { LANGUAGE_BY_EXTENSION } from "../languages.js";
 import type {
   AnalysisSummary,
   AnalyzedComponent,
@@ -313,6 +314,10 @@ const isAnalyzableFile = (
   metadata.language !== null &&
   !skippedLanguageSet.has(metadata.language);
 
+// Authoritative include/exclude filtering layer. The Python script also receives
+// these patterns for early pruning, but the normalizer re-filters because it is
+// deterministic, testable in TypeScript, and guarantees correctness regardless
+// of upstream behavior.
 const shouldIncludeFile = (
   filePath: string,
   config: ResolvedConfiguration,
@@ -410,20 +415,4 @@ const normalizeFilePath = (filePath: string): string =>
 const inferLanguage = (filePath: string): string | null => {
   const extension = path.extname(filePath).toLowerCase();
   return LANGUAGE_BY_EXTENSION[extension] ?? null;
-};
-
-const LANGUAGE_BY_EXTENSION: Record<string, string> = {
-  ".c": "c",
-  ".cpp": "cpp",
-  ".cs": "csharp",
-  ".go": "go",
-  ".java": "java",
-  ".js": "javascript",
-  ".jsx": "javascript",
-  ".kt": "kotlin",
-  ".php": "php",
-  ".py": "python",
-  ".rs": "rust",
-  ".ts": "typescript",
-  ".tsx": "typescript",
 };

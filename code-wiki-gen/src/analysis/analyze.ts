@@ -2,6 +2,7 @@ import { stat } from "node:fs/promises";
 
 import { getHeadCommitHash } from "../adapters/git.js";
 import { resolveConfiguration } from "../config/resolver.js";
+import { getErrorMessage } from "../errors.js";
 import { err, ok } from "../types/common.js";
 import type {
   AnalysisOptions,
@@ -100,6 +101,3 @@ const mapUnexpectedFailure = (
 
 const isNodeError = (error: unknown): error is NodeJS.ErrnoException =>
   error instanceof Error && "code" in error;
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown path validation error";

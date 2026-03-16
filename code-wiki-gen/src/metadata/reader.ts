@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { getErrorMessage } from "../errors.js";
 import { err, ok } from "../types/common.js";
 import type {
   EngineResult,
@@ -53,6 +54,3 @@ export const readMetadata = async (
 
   return ok(validation.metadata);
 };
-
-const getErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : "Unknown metadata read error";

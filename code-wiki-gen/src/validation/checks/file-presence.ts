@@ -4,7 +4,12 @@ import { METADATA_FILE_NAME } from "../../metadata/file.js";
 import type { ValidationFinding } from "../../types/index.js";
 import { pathExists } from "./shared.js";
 
-const REQUIRED_FILES = ["overview.md", "module-tree.json", METADATA_FILE_NAME];
+const REQUIRED_FILES = [
+  "overview.md",
+  "module-tree.json",
+  METADATA_FILE_NAME,
+  ".module-plan.json",
+];
 
 export const checkFilePresence = async (
   outputPath: string,

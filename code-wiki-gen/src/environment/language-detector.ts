@@ -1,6 +1,8 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 
+import { LANGUAGE_BY_EXTENSION } from "../languages.js";
+
 export const detectLanguages = async (repoPath: string): Promise<string[]> => {
   const languages = new Set<string>();
   await walkRepository(repoPath, languages);
@@ -16,18 +18,6 @@ const IGNORED_DIRECTORIES = new Set([
   "dist",
   "node_modules",
 ]);
-
-const LANGUAGE_BY_EXTENSION: Record<string, string> = {
-  ".cjs": "javascript",
-  ".cts": "typescript",
-  ".js": "javascript",
-  ".jsx": "javascript",
-  ".mjs": "javascript",
-  ".mts": "typescript",
-  ".py": "python",
-  ".ts": "typescript",
-  ".tsx": "typescript",
-};
 
 const walkRepository = async (
   directoryPath: string,
