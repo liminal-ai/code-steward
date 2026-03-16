@@ -14,16 +14,32 @@ export interface CliRunResult {
   exitCode: number;
 }
 
+export interface CliRunOptions {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  timeoutMs?: number;
+}
+
 /**
  * Runs the CLI binary as a subprocess and captures output.
  * Does not throw on non-zero exit codes.
  */
-export async function runCli(args: string[]): Promise<CliRunResult> {
+export async function runCli(
+  args: string[],
+  options: CliRunOptions = {},
+): Promise<CliRunResult> {
   return new Promise((resolve) => {
     const child = execFile(
       "node",
       [CLI_PATH, ...args],
-      { timeout: 30_000 },
+      {
+        cwd: options.cwd,
+        env: {
+          ...process.env,
+          ...options.env,
+        },
+        timeout: options.timeoutMs ?? 30_000,
+      },
       (error, stdout, stderr) => {
         resolve({
           stdout: stdout ?? "",
@@ -41,8 +57,9 @@ export async function runCli(args: string[]): Promise<CliRunResult> {
  */
 export async function runCliJson<T>(
   args: string[],
+  options: CliRunOptions = {},
 ): Promise<{ envelope: CliResultEnvelope<T>; exitCode: number }> {
-  const result = await runCli(args);
+  const result = await runCli(args, options);
   const envelope = JSON.parse(result.stdout) as CliResultEnvelope<T>;
   return { envelope, exitCode: result.exitCode };
 }

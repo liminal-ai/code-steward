@@ -32,6 +32,7 @@ export const resolveConfiguration = async (
   const defaults = getDefaults();
   const fileConfigurationResult = await loadConfigFile(
     callerConfiguration.data.repoPath,
+    callerConfiguration.data.configPath,
   );
 
   if (!fileConfigurationResult.ok) {

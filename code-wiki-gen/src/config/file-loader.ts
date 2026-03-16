@@ -13,28 +13,33 @@ export const CONFIG_FILE_NAME = ".docengine.json";
 
 export const loadConfigFile = async (
   repoPath?: string,
+  configPath?: string,
 ): Promise<EngineResult<Partial<ResolvedConfiguration> | null>> => {
-  if (!repoPath) {
+  if (!configPath && !repoPath) {
     return ok(null);
   }
 
-  const configPath = path.join(repoPath, CONFIG_FILE_NAME);
+  const resolvedConfigPath = configPath
+    ? path.resolve(configPath)
+    : path.join(repoPath as string, CONFIG_FILE_NAME);
 
   let fileContents: string;
 
   try {
-    fileContents = await readFile(configPath, "utf8");
+    fileContents = await readFile(resolvedConfigPath, "utf8");
   } catch (error) {
-    if (isMissingFileError(error)) {
+    if (isMissingFileError(error) && !configPath) {
       return ok(null);
     }
 
     return err(
       "CONFIGURATION_ERROR",
-      `Unable to read configuration file at ${configPath}`,
+      isMissingFileError(error)
+        ? `Configuration file not found at ${resolvedConfigPath}`
+        : `Unable to read configuration file at ${resolvedConfigPath}`,
       {
         field: "configFile",
-        path: configPath,
+        path: resolvedConfigPath,
         reason: getErrorMessage(error),
       } satisfies ConfigurationErrorDetails,
     );
@@ -47,10 +52,10 @@ export const loadConfigFile = async (
   } catch (error) {
     return err(
       "CONFIGURATION_ERROR",
-      `Invalid JSON in configuration file at ${configPath}`,
+      `Invalid JSON in configuration file at ${resolvedConfigPath}`,
       {
         field: "configFile",
-        path: configPath,
+        path: resolvedConfigPath,
         reason: getErrorMessage(error),
       } satisfies ConfigurationErrorDetails,
     );
@@ -63,11 +68,11 @@ export const loadConfigFile = async (
 
     return err(
       "CONFIGURATION_ERROR",
-      `Invalid configuration file at ${configPath}`,
+      `Invalid configuration file at ${resolvedConfigPath}`,
       {
         field: issue ? issue.path.join(".") || "configFile" : "configFile",
         issues: result.error.issues,
-        path: configPath,
+        path: resolvedConfigPath,
         reason:
           issue?.message ??
           "Configuration file does not match the expected shape",

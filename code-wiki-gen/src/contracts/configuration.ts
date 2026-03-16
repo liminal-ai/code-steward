@@ -6,9 +6,11 @@ export const configurationRequestSchema = z.object({
   includePatterns: z.array(z.string()).optional(),
   excludePatterns: z.array(z.string()).optional(),
   focusDirs: z.array(z.string()).optional(),
+  configPath: z.string().optional(),
 });
 
 export const configurationFileSchema = configurationRequestSchema.omit({
+  configPath: true,
   repoPath: true,
 });
 

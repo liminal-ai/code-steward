@@ -6,6 +6,7 @@ export interface ConfigurationRequest {
   includePatterns?: string[];
   excludePatterns?: string[];
   focusDirs?: string[];
+  configPath?: string;
 }
 
 export interface ConfigurationErrorDetails {
