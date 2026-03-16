@@ -5,6 +5,7 @@ import type {
   ProgressCallback,
   RunSuccessData,
   ValidationAndReviewResult,
+  ValidationResult,
 } from "../types/index.js";
 import { resolveOutputPath } from "./output-path.js";
 import { RunContext } from "./run-context.js";
@@ -62,6 +63,7 @@ export const generateDocumentation = async (
 
   const config = resolvedRequest.value;
   const outputPath = resolveOutputPath(config);
+  context.emitProgress("checking-environment");
   const environmentResult = await runEnvironmentCheck(config);
 
   if (!environmentResult.ok) {
@@ -74,6 +76,7 @@ export const generateDocumentation = async (
     );
   }
 
+  context.emitProgress("analyzing-structure");
   const analysisResult = await runStructuralAnalysis(config);
 
   if (!analysisResult.ok) {
@@ -87,6 +90,7 @@ export const generateDocumentation = async (
   }
 
   const analysis = analysisResult.value;
+  context.emitProgress("planning-modules");
   const planResult = await planModules(analysis, context.getSDK());
 
   if (!planResult.ok) {
@@ -118,6 +122,13 @@ export const generateDocumentation = async (
     analysis,
     config,
     context.getSDK(),
+    (moduleName, completed, total) => {
+      context.emitProgress("generating-module", {
+        completed,
+        moduleName,
+        total,
+      });
+    },
   );
 
   if (!moduleDocsResult.ok) {
@@ -133,6 +144,7 @@ export const generateDocumentation = async (
   }
 
   const moduleDocs = moduleDocsResult.value;
+  context.emitProgress("generating-overview");
   const overviewResult = await generateOverview(
     moduleDocs,
     analysis,
@@ -217,6 +229,7 @@ export const generateDocumentation = async (
   let validationResult: ValidationAndReviewResult;
 
   try {
+    context.emitProgress("validating-output");
     validationResult = await validateAndReview(
       outputPath,
       config.qualityReview,
@@ -268,6 +281,11 @@ export const generateDocumentation = async (
     qualityReviewPasses: validationResult.qualityReviewPasses,
     validationResult: validationResult.validationResult,
   };
+  const successWarnings = [
+    ...collectThinModuleWarnings(modulePlan),
+    ...collectValidationWarnings(validationResult.validationResult),
+  ];
+  context.emitProgress("writing-metadata");
   const finalMetadataResult = await writeRunMetadata(
     finalRunData,
     modulePlan,
@@ -290,6 +308,11 @@ export const generateDocumentation = async (
     );
   }
 
+  for (const warning of successWarnings) {
+    context.addWarning(warning);
+  }
+
+  context.emitProgress("complete");
   return context.assembleSuccessResult(finalRunData);
 };
 
@@ -309,3 +332,22 @@ const collectGeneratedFiles = (
     "module-tree.json",
     "overview.md",
   ].sort((left, right) => left.localeCompare(right));
+
+const collectThinModuleWarnings = (
+  modulePlan: RunSuccessData["modulePlan"],
+): string[] =>
+  modulePlan.modules
+    .filter((module) => module.components.length <= 1)
+    .map((module) => {
+      const componentLabel =
+        module.components.length === 1 ? "1 component" : "0 components";
+
+      return `Thin module "${module.name}" has ${componentLabel}; generated docs may be sparse.`;
+    });
+
+const collectValidationWarnings = (
+  validationResult: ValidationResult,
+): string[] =>
+  validationResult.findings
+    .filter((finding) => finding.severity === "warning")
+    .map((finding) => finding.message);

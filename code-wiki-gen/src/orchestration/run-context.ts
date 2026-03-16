@@ -35,12 +35,20 @@ export class RunContext {
     stage: DocumentationStage,
     extra?: Partial<DocumentationProgressEvent>,
   ): void {
-    this.onProgress?.({
-      runId: this.runId,
-      stage,
-      timestamp: new Date().toISOString(),
-      ...extra,
-    });
+    if (!this.onProgress) {
+      return;
+    }
+
+    try {
+      this.onProgress({
+        runId: this.runId,
+        stage,
+        timestamp: new Date().toISOString(),
+        ...extra,
+      });
+    } catch {
+      // Progress delivery is best-effort and must not interrupt the run.
+    }
   }
 
   addWarning(message: string): void {
@@ -60,7 +68,7 @@ export class RunContext {
   }
 
   getDurationSeconds(): number {
-    return (Date.now() - this.startTime) / 1000;
+    return Math.max((Date.now() - this.startTime) / 1000, 0.001);
   }
 
   assembleSuccessResult(data: RunSuccessData): DocumentationRunSuccess {
