@@ -207,16 +207,18 @@ describe("prompt builders", () => {
       warningCount: 0,
     };
 
-    expect(() =>
-      buildQualityReviewPrompt(
-        validationResult,
-        {},
-        {
-          secondModelReview: false,
-          selfReview: true,
-        },
-      ),
-    ).toThrow("not implemented");
+    const value = buildQualityReviewPrompt(
+      validationResult,
+      {},
+      {
+        secondModelReview: false,
+        selfReview: true,
+      },
+    );
+
+    expect(value.systemPrompt).toContain("broken links");
+    expect(value.systemPrompt).toContain("Mermaid");
+    expect(value.systemPrompt).toContain("Do not re-cluster");
   });
 
   it("quality-review prompt includes validation findings", () => {
@@ -234,15 +236,16 @@ describe("prompt builders", () => {
       warningCount: 1,
     };
 
-    expect(() =>
-      buildQualityReviewPrompt(
-        validationResult,
-        { "docs/overview.md": "# Overview" },
-        {
-          secondModelReview: true,
-          selfReview: true,
-        },
-      ),
-    ).toThrow("not implemented");
+    const value = buildQualityReviewPrompt(
+      validationResult,
+      { "docs/overview.md": "# Overview" },
+      {
+        secondModelReview: true,
+        selfReview: true,
+      },
+    );
+
+    expect(value.userMessage).toContain("Malformed Mermaid block");
+    expect(value.userMessage).toContain("docs/overview.md");
   });
 });

@@ -140,6 +140,10 @@ const setupPipelineMocks = (
       output: OVERVIEW_PAGE,
       usage: { inputTokens: 900, outputTokens: 500 },
     },
+    qualityReview: {
+      output: [],
+      usage: { inputTokens: 300, outputTokens: 120 },
+    },
     ...sdkConfig,
   });
 

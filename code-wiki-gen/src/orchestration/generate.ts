@@ -236,25 +236,41 @@ export const generateDocumentation = async (
       context.getSDK(),
     );
   } catch (error) {
+    const validationError =
+      error instanceof ValidationAndReviewError ? error : null;
+
+    if (validationError?.stage === "quality-review") {
+      context.emitProgress("quality-review");
+    }
+
     await cleanupPersistedRunFiles(outputPath);
     const engineError =
-      error instanceof ValidationAndReviewError
-        ? error.engineError
+      validationError !== null
+        ? validationError.engineError
         : {
             code: "VALIDATION_ERROR" as const,
             details: error instanceof Error ? { cause: error.message } : error,
             message: "Validation and review failed unexpectedly",
           };
 
-    return context.assembleFailureResult("validating-output", engineError, {
-      commitHash: analysis.commitHash,
-      generatedFiles: collectGeneratedFiles(moduleDocs, {
-        includeMetadata: true,
-        includeModulePlan: true,
-      }),
-      modulePlan,
-      outputPath,
-    });
+    return context.assembleFailureResult(
+      validationError?.stage ?? "validating-output",
+      engineError,
+      {
+        commitHash: analysis.commitHash,
+        generatedFiles: collectGeneratedFiles(moduleDocs, {
+          includeMetadata: true,
+          includeModulePlan: true,
+        }),
+        modulePlan,
+        outputPath,
+        qualityReviewPasses: validationError?.qualityReviewPasses,
+      },
+    );
+  }
+
+  if (validationResult.qualityReviewPasses > 0) {
+    context.emitProgress("quality-review");
   }
 
   if (validationResult.hasBlockingErrors) {
